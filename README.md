@@ -30,6 +30,18 @@ input 32:
 - googlenet
 - densenet_40
 
+## Explanation of the view
+
+The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the parents and children nodes and the position of the node in the screen (useful when we want to modify the code).
+
+The legend isn't printed (since we can get the info by hovering the mouse over the nodes), but the most important things to know are: yellow with a dot is conv (different shades for different kernel size), purple-ish is ReLU, green is BN, pink with a dot is Linear.
+
+ResNet 50 (*resnet_50*):
+![resnet_50](/demo/resnet50.png)
+
+MixNet large (*mixnet_l*):
+![mixnet_l](/demo/mixnet_l.png)
+
 ## Modify the code
 
 [The list of available operations](https://github.com/onnx/onnx/blob/main/docs/Operators.md) being really long, I didn't implement a specific drawing for all of them. If you feel like one of them should be added, this can be done easily in *[op.py](graph_drawing/op.py)*. The one that are not implemented will be displayed in dark grey by default.
