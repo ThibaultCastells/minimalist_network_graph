@@ -44,7 +44,7 @@ model = model.eval()
 print(model)
 graph = gr.Graph(model, torch.zeros([1, 3, input_size, input_size]))
 # graph.show_connections() # optionnal, output a written version of the graph (useful for debugging)
-draw = gd.DrawGraph(graph)
+draw = gd.DrawGraph(graph, debug=True)
 draw.draw_graph()
 
 

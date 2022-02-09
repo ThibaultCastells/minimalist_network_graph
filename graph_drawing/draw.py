@@ -7,7 +7,7 @@ import math
 
 class DrawGraph():
 
-    def __init__(self, graph):
+    def __init__(self, graph, debug=False):
         self.graph = graph
         self.drawn = [[None, None] for i in range(len(self.graph.nodes))] # x,y position, index = id
         self.drawn_op = set() # not used currently, but may be used to draw the legend
@@ -53,14 +53,16 @@ class DrawGraph():
 
                             self.goto(x_txt+5, y_txt-30, turtle=t_info)
                             info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[curr_id].op == 'Conv' else ""
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel, font=("Arial", 9, "normal"))
+                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel, font=("Arial", 12, "normal"))
 
-                            self.goto(x_txt+5, y_txt-45, turtle=t_info)
-                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}", font=("Arial", 9, "normal"))
-                            self.goto(x_txt+5, y_txt-60, turtle=t_info)
-                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}", font=("Arial", 9, "normal"))
-                            self.goto(x_txt+5, y_txt-75, turtle=t_info)
-                            t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 9, "normal"))
+                            self.goto(x_txt+5, y_txt-52, turtle=t_info)
+                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
+                            self.goto(x_txt+5, y_txt-74, turtle=t_info)
+                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
+
+                            if debug:
+                                self.goto(x_txt+5, y_txt-96, turtle=t_info)
+                                t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 12, "normal"))
 
                             self.last_seen = curr_id
                         return

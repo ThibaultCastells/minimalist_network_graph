@@ -32,7 +32,7 @@ input 32:
 
 ## Explanation of the view
 
-The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the parents and children nodes and the position of the node in the screen (useful when we want to modify the code).
+The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the parents and children nodes (and the position of the node in the screen, in debug mode).
 
 The legend isn't printed (since we can get the info by hovering the mouse over the nodes), but the most important things to know are: yellow with a dot is conv (different shades for different kernel size), purple-ish is ReLU, green is BN, pink with a dot is Linear.
 

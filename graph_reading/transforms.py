@@ -38,10 +38,6 @@ class Fold():
                                 name=self.name or " &gt; ".join([l.title for l in matches]),
                                 op=self.op or self.pattern,
                                 output_shape=matches[-1].output_shape)
-                # combo = Node(uid=graph.sequence_id(matches),
-                #                 name=self.name or " &gt; ".join([l.title for l in matches]),
-                #                 op=self.op or self.pattern,
-                #                 output_shape=matches[-1].output_shape)
             graph.replace(matches, combo)
 
 
@@ -81,9 +77,6 @@ class Prune():
         self.pattern = ge.GEParser(pattern).parse()
 
     def apply(self, graph):
-        # Copy the graph. Don't change the original.
-        # graph = copy.deepcopy(graph)
-
         while True:
             matches, _ = graph.search(self.pattern)
             if not matches:
