@@ -27,7 +27,7 @@ def get_args(args=sys.argv[1:]):
         '--input',
         type=int,
         default=224,
-        help='input data size')
+        help='Input data size')
 
     parser.add_argument(
         '--arch',
@@ -39,7 +39,7 @@ def get_args(args=sys.argv[1:]):
         '--debug',
         default=False,
         action='store_true',
-        help='If True, evalute only')
+        help='Mode to display debug information')
 
     args = parser.parse_args(args)
     return args
@@ -51,8 +51,13 @@ if __name__ == '__main__':
     input_size = args.input
 
     model = model.eval()
-    print(model)
+    
     graph = gr.Graph(model, torch.zeros([1, 3, input_size, input_size]))
-    if args.debug: graph.show_connections() # output a written version of the graph (useful for debugging)
+    if args.debug: 
+        print("-"*20)
+        print(model)
+        print("-"*20)
+        graph.show_connections() # output a written version of the graph (useful for debugging)
+        print("-"*20)
     draw = gd.DrawGraph(graph, debug=args.debug)
     draw.draw_graph()
