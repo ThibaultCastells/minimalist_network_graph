@@ -18,8 +18,10 @@ from models.shufflenetv2_plus import shufflenetv2plus_small
 import os
 import argparse
 import sys
+
+# ======================= PARSER =======================
 def get_args(args=sys.argv[1:]):
-    parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
+    parser = argparse.ArgumentParser(description='Parser')
 
     parser.add_argument(
         '--input',
@@ -33,19 +35,24 @@ def get_args(args=sys.argv[1:]):
         default='resnet_50',
         help='The architecture of the model')
 
+    parser.add_argument(
+        '--debug',
+        default=False,
+        action='store_true',
+        help='If True, evalute only')
+
     args = parser.parse_args(args)
     return args
 
-args = get_args()
-model = eval(args.arch)()
-input_size = args.input
+# ======================== MAIN ========================
+if __name__ == '__main__':
+    args = get_args()
+    model = eval(args.arch)()
+    input_size = args.input
 
-model = model.eval()
-print(model)
-graph = gr.Graph(model, torch.zeros([1, 3, input_size, input_size]))
-# graph.show_connections() # optionnal, output a written version of the graph (useful for debugging)
-draw = gd.DrawGraph(graph, debug=True)
-draw.draw_graph()
-
-
-
+    model = model.eval()
+    print(model)
+    graph = gr.Graph(model, torch.zeros([1, 3, input_size, input_size]))
+    if args.debug: graph.show_connections() # output a written version of the graph (useful for debugging)
+    draw = gd.DrawGraph(graph, debug=args.debug)
+    draw.draw_graph()

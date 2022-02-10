@@ -174,7 +174,8 @@ class DrawGraph():
             self.canvas.move(element_id, delta_w, 0)
         for element_id in range(len(self.drawn)):
             self.drawn[element_id][0] += delta_w
-
+        # scroll at the begining of the model (left)
+        self.canvas.xview_scroll(-25, "page")
         
 
     def draw_legend(self):
