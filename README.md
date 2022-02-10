@@ -42,6 +42,10 @@ ResNet 50 (*resnet_50*):
 MixNet large (*mixnet_l*):
 ![mixnet_l](/demo/mixnet_l.png)
 
+## Mouse commands
+
+Left click will draw a big dot. Right click will erase all the dots. Mouse scroll will change the color (by default, 5 different colors are available).
+
 ## Modify the code
 
 [The list of available operations](https://github.com/onnx/onnx/blob/main/docs/Operators.md) being really long, I didn't implement a specific drawing for all of them. If you feel like one of them should be added, this can be done easily in *[op.py](graph_drawing/op.py)*. The one that are not implemented will be displayed in dark grey by default.
@@ -62,7 +66,7 @@ RuntimeError: step!=1 is currently not supported
 
 This is due too the *torch.onnx._optimize_trace* function that doesn't support step>1 slices (so for instance, you can't do *x[::2]*).
 
-- For complex conenctions (such as in atomnas model), some connections are drawn on top of each other, so it may be hard to understand. In this situation, you can use the text info (top left) to know the children and parents of each nodes.
+- For complex connections (such as in atomnas model), some connections are drawn on top of each other, so it may be hard to understand. In this situation, you can use the text info (top left) to know the children and parents of each nodes.
 
 ## Requirements :wrench:
 * pytorch

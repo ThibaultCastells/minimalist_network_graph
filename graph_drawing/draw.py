@@ -8,6 +8,7 @@ import math
 class DrawGraph():
 
     def __init__(self, graph, debug=False):
+        self.debug = debug
         self.graph = graph
         self.drawn = [[None, None] for i in range(len(self.graph.nodes))] # x,y position, index = id
         self.drawn_op = set() # not used currently, but may be used to draw the legend
@@ -25,48 +26,8 @@ class DrawGraph():
         t.hideturtle()
         t.tracer(0) 
 
-        # create an independent turtle to draw the text info
-        t_info = t.Turtle()
-        t_info.speed('fastest')
-        t_info.hideturtle()
+        self.init_events()
 
-        # mouse click event
-        self.last_seen = None
-        def motion(event):
-            # print(f"x:{event.x}, y:{event.y}")
-            obj_coords = self.canvas.coords(event.widget.find_withtag("current"))
-            if len(obj_coords)>0: 
-                x = [obj_coords[i] for i in range(0, len(obj_coords), 2)]
-                y = [-obj_coords[i] for i in range(1, len(obj_coords), 2)]
-                min_x, max_x = min(x), max(x)
-                min_y, max_y = min(y), max(y)
-                
-                for i, e in enumerate(self.drawn):
-                    if e[0]+self.op_size/2>=min_x and e[0]<=max_x and e[1]>=min_y and e[1]<=max_y:
-                        curr_id = f"{i:03d}"
-                        if curr_id != self.last_seen:
-                            # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
-                            t_info.clear()
-                            
-                            x_txt = (self.canvas.xview()[0]-0.5) * self.w
-                            y_txt = (0.5-self.canvas.yview()[0]) * self.h
-
-                            self.goto(x_txt+5, y_txt-30, turtle=t_info)
-                            info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[curr_id].op == 'Conv' else ""
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel, font=("Arial", 12, "normal"))
-
-                            self.goto(x_txt+5, y_txt-52, turtle=t_info)
-                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
-                            self.goto(x_txt+5, y_txt-74, turtle=t_info)
-                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
-
-                            if debug:
-                                self.goto(x_txt+5, y_txt-96, turtle=t_info)
-                                t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 12, "normal"))
-
-                            self.last_seen = curr_id
-                        return
-        self.canvas.bind('<Motion>', motion)
 
     def create_canvas(self):
         self.screen = Screen()
@@ -225,6 +186,81 @@ class DrawGraph():
         self.draw_legend()
         t.update()
         t.done()
+
+    def init_events(self):
+        # create an independent turtle to draw the text info
+        t_info = t.Turtle()
+        t_info.speed('fastest')
+        t_info.hideturtle()
+
+        # mouse click event
+        self.last_seen = None
+        def motion(event):
+            # print(f"x:{event.x}, y:{event.y}")
+            obj_coords = self.canvas.coords(event.widget.find_withtag("current"))
+            if len(obj_coords)>0: 
+                x = [obj_coords[i] for i in range(0, len(obj_coords), 2)]
+                y = [-obj_coords[i] for i in range(1, len(obj_coords), 2)]
+                min_x, max_x = min(x), max(x)
+                min_y, max_y = min(y), max(y)
+                
+                for i, e in enumerate(self.drawn):
+                    if e[0]+self.op_size/2>=min_x and e[0]<=max_x and e[1]>=min_y and e[1]<=max_y:
+                        curr_id = f"{i:03d}"
+                        if curr_id != self.last_seen:
+                            # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
+                            t_info.clear()
+                            
+                            x_txt = (self.canvas.xview()[0]-0.5) * self.w
+                            y_txt = (0.5-self.canvas.yview()[0]) * self.h
+
+                            self.goto(x_txt+5, y_txt-30, turtle=t_info)
+                            info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[curr_id].op == 'Conv' else ""
+                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel, font=("Arial", 12, "normal"))
+
+                            self.goto(x_txt+5, y_txt-52, turtle=t_info)
+                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
+                            self.goto(x_txt+5, y_txt-74, turtle=t_info)
+                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
+
+                            if self.debug:
+                                self.goto(x_txt+5, y_txt-96, turtle=t_info)
+                                t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 12, "normal"))
+
+                            self.last_seen = curr_id
+                        return
+        self.canvas.bind('<Motion>', motion)
+
+        # create an independent turtle to draw dots
+        t_draw = t.Turtle()
+        t_draw.speed('fastest')
+        t_draw.hideturtle()
+        self.colors = ["#B31C26", "#222268", "#008F00", "#E28100", "#9920E6"]
+        self.current_color = 0
+        t_draw.color(self.colors[self.current_color])
+
+        def left_click(event):
+            x_canvas = (self.canvas.xview()[0]-0.5) * self.w
+            y_canvas = (0.5-self.canvas.yview()[0]) * self.h
+            x, y = event.x, event.y
+            self.goto(x_canvas + x, y_canvas - y, turtle=t_draw)
+            t_draw.dot(self.op_size)
+        self.canvas.bind("<Button-1>", left_click)
+
+        def right_click(event):
+            t_draw.clear()
+        self.canvas.bind("<Button-2>", right_click)
+        self.canvas.bind("<Button-3>", right_click)
+
+        def mouse_wheel(event):
+            self.current_color = (self.current_color + 1) % len(self.colors)
+            t_draw.color(self.colors[self.current_color])
+        # with Windows OS
+        self.canvas.bind("<MouseWheel>", mouse_wheel)
+        # with Linux OS
+        self.canvas.bind("<Button-4>", mouse_wheel)
+        self.canvas.bind("<Button-5>", mouse_wheel)
+
 
     
 
