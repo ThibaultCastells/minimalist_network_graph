@@ -255,6 +255,14 @@ class DrawGraph():
         def mouse_wheel(event):
             self.current_color = (self.current_color + 1) % len(self.colors)
             t_draw.color(self.colors[self.current_color])
+
+            t_info.clear()
+            t_info.color(self.colors[self.current_color])
+            x_txt = (self.canvas.xview()[0]-0.5) * self.w
+            y_txt = (0.5-self.canvas.yview()[0]) * self.h
+            self.goto(x_txt+self.op_size/2+5, y_txt-self.op_size/2-5, turtle=t_info)
+            t_info.dot(self.op_size)
+            t_info.color("black")
         # with Windows OS
         self.canvas.bind("<MouseWheel>", mouse_wheel)
         # with Linux OS

@@ -44,7 +44,7 @@ MixNet large (*mixnet_l*):
 
 ## Mouse commands
 
-Left click will draw a big dot. Right click will erase all the dots. Mouse scroll will change the color (by default, 5 different colors are available).
+Left click will draw a big dot. Right click will erase all the dots. Mouse scroll will change the color (the selected color will be shown at the top left of the screen: by default, 5 different colors are available).
 
 ## Modify the code
 
