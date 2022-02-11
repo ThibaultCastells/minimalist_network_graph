@@ -1,3 +1,6 @@
+import sys
+[sys.path.append(i) for i in ['.', '..']]
+
 from network_graph import draw_net
 import torch
 import torchvision.models
@@ -6,7 +9,6 @@ from network_graph.models import *
 
 import os
 import argparse
-import sys
 
 
 # ======================= PARSER =======================
