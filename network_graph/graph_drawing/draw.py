@@ -219,7 +219,11 @@ class DrawGraph:
                             self.goto(x_txt + 5, y_txt - 30, turtle=t_info)
                             info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[
                                                                                                          curr_id].op == 'Conv' else ""
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel,
+                            shape = self.graph[curr_id].shape
+                            if shape is not None:
+                                info_in = f"     input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
+                                info_out = f"     output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
+                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel + info_in + info_out,
                                          font=("Arial", 12, "normal"))
 
                             self.goto(x_txt + 5, y_txt - 52, turtle=t_info)
@@ -278,119 +282,3 @@ class DrawGraph:
         # with Linux OS
         self.canvas.bind("<Button-4>", mouse_wheel)
         self.canvas.bind("<Button-5>", mouse_wheel)
-
-# THE FOLLOWING CODE CAN BE USEFUL TO DETECT SKIP CONNECTIONS BEGINNING AND END (for AutoBot): do not delete
-
-# from queue import PriorityQueue
-# class SimplifiedGraph():
-#     def __init__(self, graph):
-
-#         self.input_id = str(graph.node_input.id)
-#         self.output_id = str(graph.node_output.id)
-
-#         self.simp_graph = [] # [(start_id, end_id, direction_id, weight)]
-#         graph.visited = [str(graph.node_input.id)]
-#         def rec_graph(node, start_id, direction, edge_weight):
-#             """Recursively go through the graph."""
-#             next_visits = []
-#             # delta_weight = 1 if node.op in ['Conv', 'Linear'] else 0
-#             # go through each child of this node:
-#             for child in graph.outgoing(node):
-#                 # compute the parents and children of this child
-#                 incoming_child = graph.incoming(child)
-#                 outgoing_child = graph.outgoing(child)
-#                 # save the direction of this branch (in the original graph)
-#                 new_direction = str(child.id) if direction is None else direction
-#                 delta_weight = 1 # if child.op in ['Conv', 'Linear'] else 0
-
-#                 if str(child.id) not in graph.visited:
-#                     graph.visited.append(str(child.id))
-#                     if len(incoming_child) == 1 and len(outgoing_child) == 1: 
-#                         # if this chils has only 1 parent and 1 child, it is removed in the simplified graph
-#                         # it adds 1 to the weight of the edge if it is a conv or linear op
-#                         next_visits.append((child, start_id, new_direction, edge_weight+delta_weight))
-#                     else: 
-#                         next_visits.append((child, str(child.id), None, delta_weight))
-#                 if len(incoming_child) != 1 or len(outgoing_child) != 1:
-#                     self.simp_graph.append([start_id, str(child.id), new_direction, edge_weight])
-#             for child, next_start_id, next_direction, next_weight in next_visits: 
-#                 rec_graph(child, next_start_id, next_direction, next_weight)
-
-#         rec_graph(graph.node_input, str(graph.node_input.id), None, 1)
-
-#         self.unique_vertices = list({x for l in self.simp_graph for x in l[:2]})
-#         self.unique_vertices.sort()
-#         self.name_map = dict([(v, i) for i,v in enumerate(self.unique_vertices)])
-
-#         # print(f"unique_vertices:{self.unique_vertices}")
-#         # print(f"name_map:{self.name_map}")
-#         self.v = len(self.unique_vertices) # number of unique vertices
-
-
-#         print(self.simp_graph)
-#         self.simp_graph_dict = {}
-#         for v in self.simp_graph:
-#             if v[0] not in self.simp_graph_dict: self.simp_graph_dict[v[0]] = []
-#             self.simp_graph_dict[v[0]].append((v[1], v[2], v[3]))
-
-#         print(f"simp_graph_dict:{self.simp_graph_dict}")
-
-
-#         # self.main_path = self.longestPath()
-
-
-#     def width(self): return len(self.main_path)+1
-
-#     def longestPath(self):
-#         """
-#             The function to find longest distances from a given vertex.
-#             It uses recursive topologicalSortUtil() to get topological sorting.
-#         """
-#         V = self.v
-#         self.Stack = []
-#         self.visited = [False for i in range(V+1)]
-#         self.adj = [[] for i in range(V+1)]
-#         for e in self.simp_graph: self.adj[self.name_map[e[0]]].append([self.name_map[e[1]], e[3]])
-#         s = self.name_map[self.input_id]
-
-#         def topologicalSortUtil(v):
-#             self.visited[v] = True
-#             for i in self.adj[v]:
-#                 if (not self.visited[i[0]]):
-#                     topologicalSortUtil(i[0])
-#             self.Stack.append(v)
-
-#         # Initialize distances to all vertices as infinite and distance to source as 0
-#         dist = [(-10**9, None) for i in range(V)]
-#         dist[s] = (0, None)
-
-#         # Call the recursive helper function to store Topological
-#         # Sort starting from all vertices one by one
-#         for i in range(V):
-#             if (self.visited[i] == False):
-#                 topologicalSortUtil(i)
-
-#         # Process vertices in topological order
-#         while (len(self.Stack) > 0):
-#             # Get the next vertex from topological order
-#             u = self.Stack[-1]
-#             del self.Stack[-1]
-#             #print(u)
-
-#             # Update distances of all adjacent vertices
-#             if (dist[u][0] != 10**9):
-#                 for i in self.adj[u]:
-#                     # print(u, i)
-#                     if (dist[i[0]][0] < dist[u][0] + i[1]):
-#                         dist[i[0]] = (dist[u][0] + i[1], u)
-
-#         # Print calculated longest distances
-#         # for i in range(V):
-#         #     if (dist[i][0] != -10**9): print(f"Dist to {self.unique_vertices[i]}: {dist[i][0]}")
-
-#         x = self.name_map[self.output_id]
-#         path = [self.output_id]
-#         while x != s:
-#             x = dist[x][1]
-#             path.insert(0, self.unique_vertices[x])
-#         return path

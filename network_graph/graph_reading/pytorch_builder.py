@@ -43,21 +43,16 @@ def pytorch_id(node):
 
 
 def get_shape(torch_node):
-    """Return the output shape of the given Pytorch node."""
-    # Extract node output shape from the node string representation
-    # This is a hack because there doesn't seem to be an official way to do it.
-    # See my quesiton in the PyTorch forum:
-    # https://discuss.pytorch.org/t/node-output-shape-from-trace-graph/24351/2
-    # TODO: find a better way to extract output shape
-    # TODO: Assuming the node has one output. Update if we encounter a multi-output node.
-    m = re.match(r".*Float\(([\d\s\,]+)\).*", str(next(torch_node.outputs())))
-    if m:
-        shape = m.group(1)
-        shape = shape.split(",")
-        shape = tuple(map(int, shape))
-    else:
-        shape = None
-    return shape
+    """Return the input and output shape of the given Pytorch node."""
+    try:
+        in_shape = next(torch_node.inputs()).type().sizes()
+    except:
+        in_shape = None
+    try:
+        out_shape = next(torch_node.outputs()).type().sizes()
+    except:
+        out_shape = None
+    return [in_shape, out_shape]
 
 
 def import_graph(hl_graph, model, args, input_names=None, verbose=False):
@@ -66,6 +61,8 @@ def import_graph(hl_graph, model, args, input_names=None, verbose=False):
     # Run the Pytorch graph to get a trace and generate a graph from it
     trace, out = torch.jit._get_trace_graph(model, args)
     # print(trace)
+
+    # https://github.com/pytorch/pytorch/blob/4737ae7a16e75958efd8e0177af8a1b570e9227d/torch/onnx/__init__.py#L328
     torch_graph = torch.onnx._optimize_trace(trace, torch.onnx.OperatorExportTypes.ONNX)
 
     # Dump list of nodes (DEBUG only)
@@ -86,7 +83,7 @@ def import_graph(hl_graph, model, args, input_names=None, verbose=False):
         # Get output shape
         shape = get_shape(torch_node)
         # Add HL node
-        hl_node = Node(uid=pytorch_id(torch_node), name=None, op=op, output_shape=shape, params=params)
+        hl_node = Node(uid=pytorch_id(torch_node), name=None, op=op, shape=shape, params=params)
         hl_graph.add_node(hl_node)
         # Add edges
         for target_torch_node in torch_graph.nodes():

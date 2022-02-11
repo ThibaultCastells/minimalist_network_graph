@@ -34,7 +34,7 @@ def detect_framework(value):
 class Node():
     """Represents a framework-agnostic neural network layer in a directed graph."""
 
-    def __init__(self, uid, name, op, output_shape=None, params=None):
+    def __init__(self, uid, name, op, shape=None, params=None):
         """
         uid: unique ID for the layer that doesn't repeat in the computation graph.
         name: Name to display
@@ -44,10 +44,10 @@ class Node():
         self.name = name  # TODO: clarify the use of op vs name vs title
         self.op = op
         self.repeat = 1
-        if output_shape:
-            assert isinstance(output_shape, (tuple, list)), \
-                "output_shape must be a tuple or list but received {}".format(type(output_shape))
-        self.output_shape = output_shape
+        if shape:
+            assert isinstance(shape, (tuple, list)), \
+                "shape must be a tuple or list but received {}".format(type(shape))
+        self.shape = shape
         self.params = params if params else {}
 
     @property
@@ -73,8 +73,8 @@ class Node():
     def __repr__(self):
         args = (self.op, self.name, self.id, self.title, self.repeat)
         f = "<Node: op: {}, name: {}, id: {}, title: {}, repeat: {}"
-        if self.output_shape:
-            args += (str(self.output_shape),)
+        if self.shape:
+            args += (str(self.shape),)
             f += ", shape: {:}"
         if self.params:
             args += (str(self.params),)
@@ -238,10 +238,10 @@ class Graph():
         if not collapse:
             self.add_node(node)
         for in_node in self.incoming(nodes):
-            # TODO: check specifically for output_shape is not generic. Consider refactoring.
-            self.add_edge(in_node, node, in_node.output_shape if hasattr(in_node, "output_shape") else None)
+            # TODO: check specifically for shape is not generic. Consider refactoring.
+            self.add_edge(in_node, node, in_node.shape if hasattr(in_node, "shape") else None)
         for out_node in self.outgoing(nodes):
-            self.add_edge(node, out_node, node.output_shape if hasattr(node, "output_shape") else None)
+            self.add_edge(node, out_node, node.shape if hasattr(node, "shape") else None)
         # Remove the old nodes
         for n in nodes:
             if collapse and n == node:
@@ -307,7 +307,7 @@ class Graph():
         for child in next_visits: self.rec_print(child)
 
     def show_connections(self):
-        # Node: ['id', 'name', 'op', 'repeat', 'output_shape', 'params', '_caption']
+        # Node: ['id', 'name', 'op', 'repeat', 'shape', 'params', '_caption']
         print()
         if self.node_input is None:
             print("Input node not found")
