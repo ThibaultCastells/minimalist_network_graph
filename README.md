@@ -7,6 +7,7 @@ The code to get the graph edges and nodes is a modified version of [this repo](h
 
 The code to draw the graph is my own code, and I used [Turtle graphics](https://docs.python.org/3/library/turtle.html). I didn't use an existing library as my objective was to have something minimalist (i.e. no need to install anything, and the drawn graph only contains the essential info).
 
+![overview](./demo/main_demo.mp4)
 
 ## Quick start
 
@@ -61,6 +62,9 @@ MixNet large (*mixnet_l*):
 ## Mouse commands
 
 Left click will draw a big dot. Right click will erase all the dots. Mouse scroll will change the color (the selected color will be shown at the top left of the screen: by default, 5 different colors are available).
+
+Demo:
+![Use color](./demo/color_demo.mp4)
 
 ## Modify the code
 
