@@ -4,52 +4,50 @@ import torch.nn as nn
 
 class SELayer(nn.Module):
 
-	def __init__(self, inplanes, isTensor=True):
-		super(SELayer, self).__init__()
-		if isTensor:
-			# if the input is (N, C, H, W)
-			self.SE_opr = nn.Sequential(
-				nn.AdaptiveAvgPool2d(1),
-				nn.Conv2d(inplanes, inplanes // 4, kernel_size=1, stride=1, bias=False),
-				nn.BatchNorm2d(inplanes // 4),
-				nn.ReLU(inplace=True),
-				nn.Conv2d(inplanes // 4, inplanes, kernel_size=1, stride=1, bias=False),
-			)
-		else:
-			# if the input is (N, C)
-			self.SE_opr = nn.Sequential(
-				nn.AdaptiveAvgPool2d(1),
-				nn.Linear(inplanes, inplanes // 4, bias=False),
-				nn.BatchNorm1d(inplanes // 4),
-				nn.ReLU(inplace=True),
-				nn.Linear(inplanes // 4, inplanes, bias=False),
-			)
+    def __init__(self, inplanes, isTensor=True):
+        super(SELayer, self).__init__()
+        if isTensor:
+            # if the input is (N, C, H, W)
+            self.SE_opr = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),
+                nn.Conv2d(inplanes, inplanes // 4, kernel_size=1, stride=1, bias=False),
+                nn.BatchNorm2d(inplanes // 4),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(inplanes // 4, inplanes, kernel_size=1, stride=1, bias=False),
+            )
+        else:
+            # if the input is (N, C)
+            self.SE_opr = nn.Sequential(
+                nn.AdaptiveAvgPool2d(1),
+                nn.Linear(inplanes, inplanes // 4, bias=False),
+                nn.BatchNorm1d(inplanes // 4),
+                nn.ReLU(inplace=True),
+                nn.Linear(inplanes // 4, inplanes, bias=False),
+            )
 
-	def forward(self, x):
-		atten = self.SE_opr(x)
-		atten = torch.clamp(atten + 3, 0, 6) / 6
-		return x * atten
+    def forward(self, x):
+        atten = self.SE_opr(x)
+        atten = torch.clamp(atten + 3, 0, 6) / 6
+        return x * atten
 
 
 class HS(nn.Module):
 
-	def __init__(self):
-		super(HS, self).__init__()
+    def __init__(self):
+        super(HS, self).__init__()
 
-	def forward(self, inputs):
-		clip = torch.clamp(inputs + 3, 0, 6) / 6
-		return inputs * clip
-
+    def forward(self, inputs):
+        clip = torch.clamp(inputs + 3, 0, 6) / 6
+        return inputs * clip
 
 
 class Shufflenet(nn.Module):
-
     def __init__(self, inp, oup, base_mid_channels, *, ksize, stride, activation, useSE):
         super(Shufflenet, self).__init__()
         self.stride = stride
         assert stride in [1, 2]
         assert ksize in [3, 5, 7]
-        assert base_mid_channels == oup//2
+        assert base_mid_channels == oup // 2
 
         self.base_mid_channel = base_mid_channels
         self.ksize = ksize
@@ -103,13 +101,14 @@ class Shufflenet(nn.Module):
             self.branch_proj = None
 
     def forward(self, old_x):
-        if self.stride==1:
+        if self.stride == 1:
             x_proj, x = channel_shuffle(old_x)
             return torch.cat((x_proj, self.branch_main(x)), 1)
-        elif self.stride==2:
+        elif self.stride == 2:
             x_proj = old_x
             x = old_x
             return torch.cat((self.branch_proj(x_proj), self.branch_main(x)), 1)
+
 
 class Shuffle_Xception(nn.Module):
 
@@ -117,7 +116,7 @@ class Shuffle_Xception(nn.Module):
         super(Shuffle_Xception, self).__init__()
 
         assert stride in [1, 2]
-        assert base_mid_channels == oup//2
+        assert base_mid_channels == oup // 2
 
         self.base_mid_channel = base_mid_channels
         self.stride = stride
@@ -183,10 +182,10 @@ class Shuffle_Xception(nn.Module):
             self.branch_proj = nn.Sequential(*branch_proj)
 
     def forward(self, old_x):
-        if self.stride==1:
+        if self.stride == 1:
             x_proj, x = channel_shuffle(old_x)
             return torch.cat((x_proj, self.branch_main(x)), 1)
-        elif self.stride==2:
+        elif self.stride == 2:
             x_proj = old_x
             x = old_x
             return torch.cat((self.branch_proj(x_proj), self.branch_main(x)), 1)

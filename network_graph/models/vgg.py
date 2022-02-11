@@ -1,9 +1,9 @@
-
 import torch.nn as nn
 from collections import OrderedDict
 
 defaultcfg = [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512]
 relucfg = [2, 6, 9, 13, 16, 19, 23, 26, 29, 33, 36, 39]
+
 
 class VGG(nn.Module):
     def __init__(self, cfg=None, num_classes=10):
@@ -25,13 +25,13 @@ class VGG(nn.Module):
 
         layers = nn.Sequential()
         in_channels = 3
-        cnt=0
+        cnt = 0
 
         for i, x in enumerate(cfg):
             if x == 'M':
                 layers.add_module('pool%d' % i, nn.MaxPool2d(kernel_size=2, stride=2))
             else:
-                cnt+=1
+                cnt += 1
                 conv2d = nn.Conv2d(in_channels, x, kernel_size=3, padding=1)
                 # conv2d = nn.Conv2d(in_channels, x, kernel_size=3, padding=1, bias=False)
 
@@ -49,6 +49,7 @@ class VGG(nn.Module):
         x = x.view(x.size(0), -1)
         x = self.classifier(x)
         return x
+
 
 def vgg_16_bn():
     return VGG()

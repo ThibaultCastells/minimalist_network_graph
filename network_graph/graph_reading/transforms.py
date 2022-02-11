@@ -9,7 +9,6 @@ from .graph import Node
 from . import ge
 
 
-
 ###########################################################################
 # Transforms
 ###########################################################################
@@ -35,9 +34,9 @@ class Fold():
             else:
                 name = '_'.join([matches[i].id for i in range(len(matches))])
                 combo = Node(uid=name,
-                                name=self.name or " &gt; ".join([l.title for l in matches]),
-                                op=self.op or self.pattern,
-                                output_shape=matches[-1].output_shape)
+                             name=self.name or " &gt; ".join([l.title for l in matches]),
+                             op=self.op or self.pattern,
+                             output_shape=matches[-1].output_shape)
             graph.replace(matches, combo)
 
 
@@ -55,13 +54,13 @@ class FoldId():
             m = self.id_regex.match(node.id)
             if not m:
                 continue
-            
+
             assert m.groups(), "Regular expression must have a matching group to avoid folding unrelated nodes."
             key = m.group(1)
             if key not in groups:
                 groups[key] = []
             groups[key].append(node)
-            
+
         # Fold each group of nodes together
         for key, nodes in groups.items():
             # Replace with a new node
@@ -123,6 +122,7 @@ class PruneBranch():
                       if hasattr(n, "__tag__") and n.__tag__ == "delete"]
             graph.remove(tagged)
 
+
 class FoldDuplicates():
     def apply(self, graph):
         matches = True
@@ -133,9 +133,9 @@ class FoldDuplicates():
                 if matches:
                     # Use op and name from the first node, and output_shape from the last
                     combo = Node(uid=graph.sequence_id(matches),
-                                name=node.name,
-                                op=node.op,
-                                output_shape=matches[-1].output_shape)
+                                 name=node.name,
+                                 op=node.op,
+                                 output_shape=matches[-1].output_shape)
                     combo.repeat = sum([n.repeat for n in matches])
                     graph.replace(matches, combo)
                     break
@@ -144,12 +144,12 @@ class FoldDuplicates():
 class Rename():
     def __init__(self, op=None, name=None, to=None):
         assert op or name, "Either op or name must be provided"
-        assert not(op and name), "Either op or name should be provided, but not both"
-        assert bool(to), "The to parameter is required" 
+        assert not (op and name), "Either op or name should be provided, but not both"
+        assert bool(to), "The to parameter is required"
         self.to = to
         self.op = re.compile(op) if op else None
         self.name = re.compile(name) if name else None
-    
+
     def apply(self, graph):
         for node in graph.nodes.values():
             if self.op:

@@ -9,7 +9,6 @@ import tensorflow as tf
 from .graph import Graph, Node
 from . import transforms as ht
 
-
 FRAMEWORK_TRANSFORMS = [
     # Rename VariableV2 op to Variable. Same for anything V2, V3, ...etc.
     ht.Rename(op=r"(\w+)V\d", to=r"\1"),
@@ -73,7 +72,7 @@ def import_graph(hl_graph, tf_graph, output=None, verbose=False):
     for tf_node in graph_def.node:
         # Read node details
         try:
-            op,  uid, name, shape, params = import_node(tf_node, tf_graph, verbose)
+            op, uid, name, shape, params = import_node(tf_node, tf_graph, verbose)
         except:
             if verbose:
                 logging.exception("Failed to read node {}".format(tf_node))

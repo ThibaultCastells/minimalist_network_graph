@@ -2,11 +2,11 @@
 import warnings
 from torch import nn
 
-from models.mobilenet_base import ConvBNReLU
-from models.mobilenet_base import get_active_fn
-from models.mobilenet_base import get_block
-from models.mobilenet_base import InvertedResidualChannelsFused
-from models.mobilenet_base import _get_named_block_list
+from .mobilenet_base import ConvBNReLU
+from .mobilenet_base import get_active_fn
+from .mobilenet_base import get_block
+from .mobilenet_base import InvertedResidualChannelsFused
+from .mobilenet_base import _get_named_block_list
 
 __all__ = ['MobileNetSearched']
 
@@ -145,25 +145,25 @@ class MobileNetSearched(nn.Module):
 
 def atomnas_a():
     inverted_residual_setting = [[16, 1, 1, [3], [16], False],
-                                  [24, 1, 2, [3, 5, 7], [16, 12, 9], True],
-                                  [24, 1, 1, [3, 5, 7], [19, 2, 1], True],
-                                  [24, 1, 1, [3, 5, 7], [9, 7, 1], True],
-                                  [24, 1, 1, [3, 5], [14, 1], True],
-                                  [40, 1, 2, [3, 5, 7], [46, 49, 50], True],
-                                  [40, 1, 1, [3, 5, 7], [27, 19, 14], True],
-                                  [40, 1, 1, [3, 5, 7], [22, 11, 3], True],
-                                  [40, 1, 1, [3, 5, 7], [30, 14, 3], True],
-                                  [80, 1, 2, [3, 5, 7], [127, 130, 111], True],
-                                  [80, 1, 1, [3, 5, 7], [33, 25, 45], True],
-                                  [80, 1, 1, [3, 5, 7], [38, 12, 34], True],
-                                  [80, 1, 1, [3, 5, 7], [53, 23, 19], True],
-                                  [96, 1, 1, [3, 5, 7], [344, 196, 168], True],
-                                  [96, 1, 1, [3, 5, 7], [44, 18, 27], True],
-                                  [96, 1, 1, [3, 5, 7], [37, 29, 18], True],
-                                  [96, 1, 1, [3, 5, 7], [52, 21, 24], True],
-                                  [192, 1, 2, [3, 5, 7], [381, 364, 342], True],
-                                  [192, 1, 1, [3, 5, 7], [123, 76, 162], True],
-                                  [192, 1, 1, [3, 5, 7], [179, 107, 212], True],
-                                  [192, 1, 1, [3, 5, 7], [238, 111, 171], True],
-                                  [320, 1, 1, [3, 5, 7], [654, 495, 546], True]]
-    return MobileNetSearched(input_channel = 16, active_fn = 'nn.ReLU', inverted_residual_setting=inverted_residual_setting)
+                                 [24, 1, 2, [3, 5, 7], [16, 12, 9], True],
+                                 [24, 1, 1, [3, 5, 7], [19, 2, 1], True],
+                                 [24, 1, 1, [3, 5, 7], [9, 7, 1], True],
+                                 [24, 1, 1, [3, 5], [14, 1], True],
+                                 [40, 1, 2, [3, 5, 7], [46, 49, 50], True],
+                                 [40, 1, 1, [3, 5, 7], [27, 19, 14], True],
+                                 [40, 1, 1, [3, 5, 7], [22, 11, 3], True],
+                                 [40, 1, 1, [3, 5, 7], [30, 14, 3], True],
+                                 [80, 1, 2, [3, 5, 7], [127, 130, 111], True],
+                                 [80, 1, 1, [3, 5, 7], [33, 25, 45], True],
+                                 [80, 1, 1, [3, 5, 7], [38, 12, 34], True],
+                                 [80, 1, 1, [3, 5, 7], [53, 23, 19], True],
+                                 [96, 1, 1, [3, 5, 7], [344, 196, 168], True],
+                                 [96, 1, 1, [3, 5, 7], [44, 18, 27], True],
+                                 [96, 1, 1, [3, 5, 7], [37, 29, 18], True],
+                                 [96, 1, 1, [3, 5, 7], [52, 21, 24], True],
+                                 [192, 1, 2, [3, 5, 7], [381, 364, 342], True],
+                                 [192, 1, 1, [3, 5, 7], [123, 76, 162], True],
+                                 [192, 1, 1, [3, 5, 7], [179, 107, 212], True],
+                                 [192, 1, 1, [3, 5, 7], [238, 111, 171], True],
+                                 [320, 1, 1, [3, 5, 7], [654, 495, 546], True]]
+    return MobileNetSearched(input_channel=16, active_fn='nn.ReLU', inverted_residual_setting=inverted_residual_setting)

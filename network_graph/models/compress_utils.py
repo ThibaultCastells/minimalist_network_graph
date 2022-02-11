@@ -6,6 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 def add_prefix(name, prefix=None, split='.'):
     """Add prefix to name if given."""
     if prefix is not None:
@@ -54,7 +55,6 @@ def build_default_info(m_new,
                        var_type='variable',
                        prefix_new=None,
                        prefix_old=None):
-
     def _build_name(prefix):
         return add_prefix(attr, prefix)
 
@@ -158,7 +158,7 @@ def compress_conv_bn_relu(m_new,
                           prefix_new=None,
                           prefix_old=None,
                           dim=0):
-    import models.mobilenet_base as mb
+    from . import mobilenet_base as mb
 
     assert m_new is None or isinstance(m_new, mb.ConvBNReLU)
     assert isinstance(m_old, mb.ConvBNReLU)
@@ -189,13 +189,11 @@ def copmress_inverted_residual_channels(m,
                                         prune_info=None,
                                         prefix=None,
                                         verbose=False):
-
     def update(infos):
         for info in infos:
             if optimizer is not None and info['type'] != 'buffer':
                 optimizer.compress_mask(info, verbose=verbose)
-            if ema is not None and 'num_batches_tracked' not in info[
-                    'var_old_name']:
+            if ema is not None and 'num_batches_tracked' not in info['var_old_name']:
                 ema.compress_mask(info, verbose=verbose)
             if prune_info is not None and issubclass(
                     info['module_class'],
@@ -212,8 +210,7 @@ def copmress_inverted_residual_channels(m,
         for info in infos:
             if optimizer is not None and info['type'] != 'buffer':
                 optimizer.compress_drop(info, verbose=verbose)
-            if ema is not None and 'num_batches_tracked' not in info[
-                    'var_old_name']:
+            if ema is not None and 'num_batches_tracked' not in info['var_old_name']:
                 ema.compress_drop(info, verbose=verbose)
             if prune_info is not None and issubclass(
                     info['module_class'],
@@ -279,10 +276,10 @@ def copmress_inverted_residual_channels(m,
         adjust_info = {'active_fn': m.active_fn}
         adjust_info['bias'] = _find_only_one(
             lambda info: issubclass(info['module_class'], nn.BatchNorm2d) and
-            'bias' in info['var_old_name'], depth_infos)
+                         'bias' in info['var_old_name'], depth_infos)
         adjust_info['following_conv_weight'] = _find_only_one(
             lambda info: issubclass(info['module_class'], nn.Conv2d) and
-            'weight' in info['var_old_name'], proj_infos)
+                         'weight' in info['var_old_name'], proj_infos)
         adjust_infos.append(adjust_info)
     prefix_pw_bn = add_prefix('pw_bn', prefix)
     pw_bn_infos = adjust_bn(new_pw_bn,

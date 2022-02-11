@@ -11,11 +11,11 @@ The code to draw the graph is my own code, and I used [Turtle graphics](https://
 ## Quick start
 
 ```
-python3 main.py --arch arch_name --input input_size
+PYTHONPATH=. python3 demo/main.py --arch arch_name --input input_size
 ```
 By default, `--arch` is resnet_50 and `--input` is 224.
 
-Options for `--arch` (feel free to add more in *[models](models/)*): 
+Options for `--arch` (feel free to add more in *[models](network_graph/models/)*): 
 
 input 224:
 - mixnet_s, mixnet_m, mixnet_l
@@ -30,6 +30,22 @@ input 32:
 - googlenet
 - densenet_40
 
+## Installation
+
+```
+pip install git+https://github.com/ThibaultCastells/minimalist_network_graph
+```
+or clone the project and then 
+```
+cd minimalist_network_graph
+python setup.py install
+```
+To run the demo, execute in the root folder
+```
+python demo/main.py --arch arch_name --input input_size
+```
+with optional arguments described above.
+
 ## Explanation of the view
 
 The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the parents and children nodes (and the position of the node in the screen, in debug mode).
@@ -37,10 +53,10 @@ The info printed at the top left corner appears when the mouse is over an operat
 The legend isn't printed (since we can get the info by hovering the mouse over the nodes), but the most important things to know are: yellow with a dot is conv (different shades for different kernel size), purple-ish is ReLU, green is BN, pink with a dot is Linear.
 
 ResNet 50 (*resnet_50*):
-![resnet_50](/demo/resnet50.png)
+![resnet_50](./demo/resnet50.png)
 
 MixNet large (*mixnet_l*):
-![mixnet_l](/demo/mixnet_l.png)
+![mixnet_l](./demo/mixnet_l.png)
 
 ## Mouse commands
 
@@ -48,11 +64,11 @@ Left click will draw a big dot. Right click will erase all the dots. Mouse scrol
 
 ## Modify the code
 
-[The list of available operations](https://github.com/onnx/onnx/blob/main/docs/Operators.md) being really long, I didn't implement a specific drawing for all of them. If you feel like one of them should be added, this can be done easily in *[op.py](graph_drawing/op.py)*. The one that are not implemented will be displayed in dark grey by default.
+[The list of available operations](https://github.com/onnx/onnx/blob/main/docs/Operators.md) being really long, I didn't implement a specific drawing for all of them. If you feel like one of them should be added, this can be done easily in *[op.py](network_graph/graph_drawing/op.py)*. The one that are not implemented will be displayed in dark grey by default.
 
-If you want to add a model, put the architecture file in *[models](models/)*, import it in *[main.py](main.py)*, and you are good to go.
+If you want to add a model, put the architecture file in *[models](network_graph/models/)*, import it in *[main.py](demo/main.py)*, and you are good to go.
 
-If there is a specific operation that you don't want to see, you can add it in the *REMOVED_NODES* list in *[graph.py](graph_reading/graph.py)*.
+If there is a specific operation that you don't want to see, you can add it in the *REMOVED_NODES* list in *[graph.py](network_graph/graph_reading/graph.py)*.
 
 Also, if you have improvement ideas or if you want to contribute, you can send me a message :)
 

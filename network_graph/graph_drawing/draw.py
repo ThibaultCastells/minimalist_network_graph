@@ -1,40 +1,37 @@
-
 from turtle import Screen, Turtle
 import turtle as t
 from .op import *
 import math
 
 
-class DrawGraph():
+class DrawGraph:
 
     def __init__(self, graph, debug=False):
         self.debug = debug
         self.graph = graph
-        self.drawn = [[None, None] for i in range(len(self.graph.nodes))] # x,y position, index = id
-        self.drawn_op = set() # not used currently, but may be used to draw the legend
+        self.drawn = [[None, None] for i in range(len(self.graph.nodes))]  # x,y position, index = id
+        self.drawn_op = set()  # not used currently, but may be used to draw the legend
 
         self.w, self.h = 1700, 1200
-        self.w_canvas, self.h_canvas= 1700, 800
+        self.w_canvas, self.h_canvas = 1700, 800
         self.op_size = 20
 
         self.create_canvas()
-        
+
         print(f"h:{t.window_width()}, w:{t.window_height()}, op_size:{self.op_size}")
 
         t.mode("standard")
         t.speed('fastest')
         t.hideturtle()
-        t.tracer(0) 
+        t.tracer(0)
 
         self.init_events()
 
-
     def create_canvas(self):
         self.screen = Screen()
-        self.screen.screensize(self.w, self.h) # this is the size of the screen
-        self.screen.setup(self.w_canvas, self.h_canvas)         # this is the size of the window (=seen part of the screen)
+        self.screen.screensize(self.w, self.h)  # this is the size of the screen
+        self.screen.setup(self.w_canvas, self.h_canvas)  # this is the size of the window (=seen part of the screen)
         self.canvas = self.screen.getcanvas()
-
 
     def draw_node(self, node, x, y):
         """
@@ -46,9 +43,10 @@ class DrawGraph():
         """
         if node.op in SUPPORTED_OPERATIONS:
             eval(f"{node.op}(self.op_size, {x}, {y}, {node.params})")
-        else: Unspecified(self.op_size, x, y, node.params)
+        else:
+            Unspecified(self.op_size, x, y, node.params)
 
-    def coord_equal(self, coord1, coord2, eps = 0.01):
+    def coord_equal(self, coord1, coord2, eps=0.01):
         return abs(coord1[0] - coord2[0]) < eps and abs(coord1[1] - coord2[1]) < eps
 
     def draw_nodes_and_edges(self, start_x=0, start_y=0):
@@ -61,10 +59,11 @@ class DrawGraph():
         self.drawn[int(node.id)] = [start_x, start_y]
 
         coord = self.draw_branches(len(node_next))
-        
-        curr_branches = [(node_next[i], coord[i], ([] if len(node_next)==1 else [start_y]), node.id) for i in range(len(node_next))]
+
+        curr_branches = [(node_next[i], coord[i], ([] if len(node_next) == 1 else [start_y]), node.id) for i in
+                         range(len(node_next))]
         topological_sort = self.graph.get_topological_sort()
-        del topological_sort[-1] # remove the input node, as we already visited it
+        del topological_sort[-1]  # remove the input node, as we already visited it
 
         # go through the graph in topological order
         while (len(topological_sort) > 0):
@@ -72,62 +71,62 @@ class DrawGraph():
             del topological_sort[-1]
             node_id = f'{u:03d}'
             node = self.graph[node_id]
-            
-            node_coords = [e for e in curr_branches if e[0].id == node_id] # [(next_node, coord, center, node_id)]
- 
+
+            node_coords = [e for e in curr_branches if e[0].id == node_id]  # [(next_node, coord, center, node_id)]
+
             if len(node_coords) == 1:
                 node_coord = node_coords[0]
-                x,y = node_coord[1]
+                x, y = node_coord[1]
                 center = node_coord[2]
             else:
                 node_coords = sorted(node_coords, key=lambda e: e[1][0], reverse=True)
                 node_coord = node_coords[0]
                 x = node_coord[1][0]
-                y = node_coord[2][-1] if len(center)>0 else 0
+                y = node_coord[2][-1] if len(center) > 0 else 0
                 center = node_coord[2]
                 center = node_coord[2][:-1]
-                
+
             # remove the branches that are already drawn
             for i in range(len(curr_branches), 0, -1):
-                if curr_branches[i-1][0].id == node_id:
-                    if len(node_coords) > 1: end_skip_connection.append(curr_branches[i-1])
-                    del curr_branches[i-1]
-                    
-            self.draw_node(node, x+int(self.op_size/2), y)
-            self.drawn[u] = [x,y]
+                if curr_branches[i - 1][0].id == node_id:
+                    if len(node_coords) > 1: end_skip_connection.append(curr_branches[i - 1])
+                    del curr_branches[i - 1]
+
+            self.draw_node(node, x + int(self.op_size / 2), y)
+            self.drawn[u] = [x, y]
 
             node_next = self.graph.outgoing(node)
-            if len(node_next) == 0: 
-                continue # for the last node, there is no next node
-            if len(node_next) > 1: 
+            if len(node_next) == 0:
+                continue  # for the last node, there is no next node
+            if len(node_next) > 1:
                 center = center.copy()
-                center.append(int(t.pos()[1])) # if >1 branches, memorize the y-coord of the last branch
+                center.append(int(t.pos()[1]))  # if >1 branches, memorize the y-coord of the last branch
             coord = self.draw_branches(len(node_next), len(center))
             for i in range(len(node_next)):
                 curr_branches.append((node_next[i], coord[i], center, node.id))
-                
-    
+
         # complete the skip connections
         for node, coord, _, parent_id in end_skip_connection:
             x_prev, y_prev = coord
             x_parent, y_parent = self.drawn[int(parent_id)]
-            if self.coord_equal([x_prev, y_prev], [x_parent, y_parent]): 
-                x_prev += int(self.op_size/2)
+            if self.coord_equal([x_prev, y_prev], [x_parent, y_parent]):
+                x_prev += int(self.op_size / 2)
             x, y = self.drawn[int(node.id)]
 
             self.goto(x_prev, y_prev)
-            if self.coord_equal([x, y_prev], [x, y]): # if prev is not higher/lower
+            if self.coord_equal([x, y_prev], [x, y]):  # if prev is not higher/lower
                 t.goto(x, y_prev)
             else:
-                t.goto(x + int(self.op_size/2), y_prev)
-                t.goto(x + int(self.op_size/2), y + (int(self.op_size/2) if y_prev > y else - int(self.op_size/2)))
+                t.goto(x + int(self.op_size / 2), y_prev)
+                t.goto(x + int(self.op_size / 2),
+                       y + (int(self.op_size / 2) if y_prev > y else - int(self.op_size / 2)))
             self.goto(x, y)
 
         # update window size to fit the graph:
         x_sort_drawn = sorted(self.drawn, key=lambda e: e[0], reverse=True)
         x_min = x_sort_drawn[-2][0]
         x_max = x_sort_drawn[0][0]
-        w = x_max - x_min + 10*int(self.op_size/2)
+        w = x_max - x_min + 10 * int(self.op_size / 2)
         self.screen.screensize(w, self.h)
         delta_w = (self.w - w) / 2
         self.w = w
@@ -137,7 +136,6 @@ class DrawGraph():
             self.drawn[element_id][0] += delta_w
         # scroll at the begining of the model (left)
         self.canvas.xview_scroll(-25, "page")
-        
 
     def draw_legend(self):
         # draw a legend for the op (only legend the op that are present in this graph)
@@ -146,25 +144,26 @@ class DrawGraph():
     def draw_branches(self, n, depth=0):
         # known issue: if branches in branches, then things are drawn on top of each other
         t.setheading(0)
-        t.forward(self.op_size/2)
+        t.forward(self.op_size / 2)
         coord = []
-        if n > 1: 
-            t.dot(self.op_size/4)
-            gap = max(8*self.op_size - 1.5*(depth*self.op_size), 2*self.op_size)
-            (x0,y0) = t.pos()
-            start = y0 + ((n/2 - 1/2) * gap)
+        if n > 1:
+            t.dot(self.op_size / 4)
+            gap = max(8 * self.op_size - 1.5 * (depth * self.op_size), 2 * self.op_size)
+            (x0, y0) = t.pos()
+            start = y0 + ((n / 2 - 1 / 2) * gap)
             self.goto(x0, start)
             for i in range(n):
                 t.setheading(0)
-                t.forward(self.op_size/2)
+                t.forward(self.op_size / 2)
                 coord.append(t.pos())
-                if i+1 < n:
-                    self.forward(self.op_size/2, 180, draw=False)
-                    if i > 0: t.dot(self.op_size/4)
+                if i + 1 < n:
+                    self.forward(self.op_size / 2, 180, draw=False)
+                    if i > 0: t.dot(self.op_size / 4)
                     t.setheading(270)
                     t.forward(gap)
             t.setheading(0)
-        else: coord.append(t.pos())
+        else:
+            coord.append(t.pos())
         return coord
 
     def forward(self, dist, heading, draw=True):
@@ -182,7 +181,7 @@ class DrawGraph():
         turtle.setheading(0)
 
     def draw_graph(self):
-        self.draw_nodes_and_edges(start_x=-self.w/2 + 0.5 * self.op_size + 10)
+        self.draw_nodes_and_edges(start_x=-self.w / 2 + 0.5 * self.op_size + 10)
         self.draw_legend()
         t.update()
         t.done()
@@ -195,40 +194,46 @@ class DrawGraph():
 
         # mouse click event
         self.last_seen = None
+
         def motion(event):
             # print(f"x:{event.x}, y:{event.y}")
             obj_coords = self.canvas.coords(event.widget.find_withtag("current"))
-            if len(obj_coords)>0: 
+            if len(obj_coords) > 0:
                 x = [obj_coords[i] for i in range(0, len(obj_coords), 2)]
                 y = [-obj_coords[i] for i in range(1, len(obj_coords), 2)]
                 min_x, max_x = min(x), max(x)
                 min_y, max_y = min(y), max(y)
-                
+
                 for i, e in enumerate(self.drawn):
-                    if e[0]+self.op_size/2>=min_x and e[0]<=max_x and e[1]>=min_y and e[1]<=max_y:
+                    if e[0] + self.op_size / 2 >= min_x and e[0] <= max_x and e[1] >= min_y and e[1] <= max_y:
                         curr_id = f"{i:03d}"
                         if curr_id != self.last_seen:
                             # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
                             t_info.clear()
-                            
-                            x_txt = (self.canvas.xview()[0]-0.5) * self.w
-                            y_txt = (0.5-self.canvas.yview()[0]) * self.h
 
-                            self.goto(x_txt+5, y_txt-30, turtle=t_info)
-                            info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[curr_id].op == 'Conv' else ""
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel, font=("Arial", 12, "normal"))
+                            x_txt = (self.canvas.xview()[0] - 0.5) * self.w
+                            y_txt = (0.5 - self.canvas.yview()[0]) * self.h
 
-                            self.goto(x_txt+5, y_txt-52, turtle=t_info)
-                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
-                            self.goto(x_txt+5, y_txt-74, turtle=t_info)
-                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}", font=("Arial", 12, "normal"))
+                            self.goto(x_txt + 5, y_txt - 30, turtle=t_info)
+                            info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[
+                                                                                                         curr_id].op == 'Conv' else ""
+                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel,
+                                         font=("Arial", 12, "normal"))
+
+                            self.goto(x_txt + 5, y_txt - 52, turtle=t_info)
+                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}",
+                                         font=("Arial", 12, "normal"))
+                            self.goto(x_txt + 5, y_txt - 74, turtle=t_info)
+                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}",
+                                         font=("Arial", 12, "normal"))
 
                             if self.debug:
-                                self.goto(x_txt+5, y_txt-96, turtle=t_info)
+                                self.goto(x_txt + 5, y_txt - 96, turtle=t_info)
                                 t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 12, "normal"))
 
                             self.last_seen = curr_id
                         return
+
         self.canvas.bind('<Motion>', motion)
 
         # create an independent turtle to draw dots
@@ -240,15 +245,17 @@ class DrawGraph():
         t_draw.color(self.colors[self.current_color])
 
         def left_click(event):
-            x_canvas = (self.canvas.xview()[0]-0.5) * self.w
-            y_canvas = (0.5-self.canvas.yview()[0]) * self.h
+            x_canvas = (self.canvas.xview()[0] - 0.5) * self.w
+            y_canvas = (0.5 - self.canvas.yview()[0]) * self.h
             x, y = event.x, event.y
             self.goto(x_canvas + x, y_canvas - y, turtle=t_draw)
             t_draw.dot(self.op_size)
+
         self.canvas.bind("<Button-1>", left_click)
 
         def right_click(event):
             t_draw.clear()
+
         self.canvas.bind("<Button-2>", right_click)
         self.canvas.bind("<Button-3>", right_click)
 
@@ -258,25 +265,17 @@ class DrawGraph():
 
             t_info.clear()
             t_info.color(self.colors[self.current_color])
-            x_txt = (self.canvas.xview()[0]-0.5) * self.w
-            y_txt = (0.5-self.canvas.yview()[0]) * self.h
-            self.goto(x_txt+self.op_size/2+5, y_txt-self.op_size/2-5, turtle=t_info)
+            x_txt = (self.canvas.xview()[0] - 0.5) * self.w
+            y_txt = (0.5 - self.canvas.yview()[0]) * self.h
+            self.goto(x_txt + self.op_size / 2 + 5, y_txt - self.op_size / 2 - 5, turtle=t_info)
             t_info.dot(self.op_size)
             t_info.color("black")
+
         # with Windows OS
         self.canvas.bind("<MouseWheel>", mouse_wheel)
         # with Linux OS
         self.canvas.bind("<Button-4>", mouse_wheel)
         self.canvas.bind("<Button-5>", mouse_wheel)
-
-
-    
-
-
-
-
-
-
 
 # THE FOLLOWING CODE CAN BE USEFUL TO DETECT SKIP CONNECTIONS BEGINNING AND END (for AutoBot): do not delete
 
@@ -301,7 +300,7 @@ class DrawGraph():
 #                 # save the direction of this branch (in the original graph)
 #                 new_direction = str(child.id) if direction is None else direction
 #                 delta_weight = 1 # if child.op in ['Conv', 'Linear'] else 0
-                
+
 #                 if str(child.id) not in graph.visited:
 #                     graph.visited.append(str(child.id))
 #                     if len(incoming_child) == 1 and len(outgoing_child) == 1: 
@@ -324,21 +323,20 @@ class DrawGraph():
 #         # print(f"unique_vertices:{self.unique_vertices}")
 #         # print(f"name_map:{self.name_map}")
 #         self.v = len(self.unique_vertices) # number of unique vertices
-        
+
 
 #         print(self.simp_graph)
 #         self.simp_graph_dict = {}
 #         for v in self.simp_graph:
 #             if v[0] not in self.simp_graph_dict: self.simp_graph_dict[v[0]] = []
 #             self.simp_graph_dict[v[0]].append((v[1], v[2], v[3]))
-            
+
 #         print(f"simp_graph_dict:{self.simp_graph_dict}")
-        
 
 
 #         # self.main_path = self.longestPath()
 
-        
+
 #     def width(self): return len(self.main_path)+1
 
 #     def longestPath(self):
@@ -363,13 +361,13 @@ class DrawGraph():
 #         # Initialize distances to all vertices as infinite and distance to source as 0
 #         dist = [(-10**9, None) for i in range(V)]
 #         dist[s] = (0, None)
-    
+
 #         # Call the recursive helper function to store Topological
 #         # Sort starting from all vertices one by one
 #         for i in range(V):
 #             if (self.visited[i] == False):
 #                 topologicalSortUtil(i)
-    
+
 #         # Process vertices in topological order
 #         while (len(self.Stack) > 0):
 #             # Get the next vertex from topological order
@@ -383,15 +381,14 @@ class DrawGraph():
 #                     # print(u, i)
 #                     if (dist[i[0]][0] < dist[u][0] + i[1]):
 #                         dist[i[0]] = (dist[u][0] + i[1], u)
-        
+
 #         # Print calculated longest distances
 #         # for i in range(V):
 #         #     if (dist[i][0] != -10**9): print(f"Dist to {self.unique_vertices[i]}: {dist[i][0]}")
-        
+
 #         x = self.name_map[self.output_id]
 #         path = [self.output_id]
 #         while x != s:
 #             x = dist[x][1]
 #             path.insert(0, self.unique_vertices[x])
 #         return path
- 

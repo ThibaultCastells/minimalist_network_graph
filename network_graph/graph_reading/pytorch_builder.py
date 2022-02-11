@@ -79,7 +79,7 @@ def import_graph(hl_graph, model, args, input_names=None, verbose=False):
         # Op
         op = torch_node.kind()
         # Parameters
-        params = {k: torch_node[k] for k in torch_node.attributeNames()} 
+        params = {k: torch_node[k] for k in torch_node.attributeNames()}
         # Inputs/outputs
         # TODO: inputs = [i.unique() for i in node.inputs()]
         outputs = [o.unique() for o in torch_node.outputs()]
