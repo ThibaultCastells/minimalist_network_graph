@@ -79,7 +79,7 @@ def import_graph(hl_graph, tf_graph, output=None, verbose=False):
             continue
 
         # Add node
-        hl_node = Node(uid=uid, name=name, op=op, output_shape=shape, params=params)
+        hl_node = Node(uid=uid, name=name, op=op, shape=shape, params=params)
         hl_graph.add_node(hl_node)
 
         # Add edges

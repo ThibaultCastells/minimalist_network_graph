@@ -36,7 +36,7 @@ class Fold():
                 combo = Node(uid=name,
                              name=self.name or " &gt; ".join([l.title for l in matches]),
                              op=self.op or self.pattern,
-                             output_shape=matches[-1].output_shape)
+                             shape=matches[-1].shape)
             graph.replace(matches, combo)
 
 
@@ -131,11 +131,11 @@ class FoldDuplicates():
                 pattern = ge.SerialPattern([ge.NodePattern(node.op), ge.NodePattern(node.op)])
                 matches, _ = pattern.match(graph, node)
                 if matches:
-                    # Use op and name from the first node, and output_shape from the last
+                    # Use op and name from the first node, and shape from the last
                     combo = Node(uid=graph.sequence_id(matches),
                                  name=node.name,
                                  op=node.op,
-                                 output_shape=matches[-1].output_shape)
+                                 shape=matches[-1].shape)
                     combo.repeat = sum([n.repeat for n in matches])
                     graph.replace(matches, combo)
                     break
