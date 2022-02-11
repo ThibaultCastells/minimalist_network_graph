@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-import models.compress_utils as cu
+from . import compress_utils as cu
 
 
 def add_prefix(name, prefix=None, split='.'):
@@ -377,7 +377,7 @@ class InvertedResidualChannels(nn.Module):
             return x
 
         tmp = sum([op(x) for op in self.ops])
-        tmp = self.pw_bn(tmp) 
+        tmp = self.pw_bn(tmp)
         if self.use_res_connect:
             return x + tmp
         return tmp

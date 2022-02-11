@@ -1,10 +1,10 @@
-import torch
 import torch.nn as nn
-from models.blocks import Shufflenet, Shuffle_Xception, HS, SELayer
+from .blocks import Shufflenet, Shuffle_Xception, HS, SELayer
 
 """
 Inspired by https://github.com/megvii-model/ShuffleNet-Series/tree/master/ShuffleNetV2%2B
 """
+
 
 class ShuffleNetV2_Plus(nn.Module):
     def __init__(self, input_size=224, n_class=1000, architecture=None, model_size='Large'):
@@ -25,7 +25,6 @@ class ShuffleNetV2_Plus(nn.Module):
         else:
             raise NotImplementedError
 
-
         # building first layer
         input_channel = self.stage_out_channels[1]
         self.first_conv = nn.Sequential(
@@ -38,7 +37,7 @@ class ShuffleNetV2_Plus(nn.Module):
         archIndex = 0
         for idxstage in range(len(self.stage_repeats)):
             numrepeat = self.stage_repeats[idxstage]
-            output_channel = self.stage_out_channels[idxstage+2]
+            output_channel = self.stage_out_channels[idxstage + 2]
 
             activation = 'HS' if idxstage >= 1 else 'ReLU'
             useSE = 'True' if idxstage >= 2 else False
@@ -54,19 +53,19 @@ class ShuffleNetV2_Plus(nn.Module):
                 if blockIndex == 0:
                     print('Shuffle3x3')
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=3, stride=stride,
-                                    activation=activation, useSE=useSE))
+                                                    activation=activation, useSE=useSE))
                 elif blockIndex == 1:
                     print('Shuffle5x5')
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=5, stride=stride,
-                                    activation=activation, useSE=useSE))
+                                                    activation=activation, useSE=useSE))
                 elif blockIndex == 2:
                     print('Shuffle7x7')
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=7, stride=stride,
-                                    activation=activation, useSE=useSE))
+                                                    activation=activation, useSE=useSE))
                 elif blockIndex == 3:
                     print('Xception')
                     self.features.append(Shuffle_Xception(inp, outp, base_mid_channels=outp // 2, stride=stride,
-                                    activation=activation, useSE=useSE))
+                                                          activation=activation, useSE=useSE))
                 else:
                     raise NotImplementedError
                 input_channel = output_channel
@@ -133,4 +132,4 @@ def shufflenetv2plus_small() -> ShuffleNetV2_Plus:
         ShuffleNetV2+_small model from https://github.com/megvii-model/ShuffleNet-Series/tree/master/ShuffleNetV2%2B
     """
     architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-    return ShuffleNetV2_Plus(architecture=architecture,model_size='Small')
+    return ShuffleNetV2_Plus(architecture=architecture, model_size='Small')

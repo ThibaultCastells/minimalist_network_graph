@@ -52,16 +52,15 @@ class SEBlock(nn.Module):
 class ConvBlock(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, stride=1,
                  groups=1, dilate=1, act_type="swish"):
-
         super(ConvBlock, self).__init__()
         assert stride in [1, 2]
         dilate = 1 if stride > 1 else dilate
         padding = ((kernel_size - 1) // 2) * dilate
 
         self.conv_block = nn.Sequential(OrderedDict([
-           ("conv", nn.Conv2d(in_channels=in_planes, out_channels=out_planes,
-                              kernel_size=kernel_size, stride=stride, padding=padding,
-                              dilation=dilate, groups=groups, bias=False)),
+            ("conv", nn.Conv2d(in_channels=in_planes, out_channels=out_planes,
+                               kernel_size=kernel_size, stride=stride, padding=padding,
+                               dilation=dilate, groups=groups, bias=False)),
             ("norm", nn.BatchNorm2d(num_features=out_planes,
                                     eps=1e-3, momentum=0.01)),
             ("act", Swish(inplace=True) if act_type == "swish" else nn.ReLU(inplace=True))
@@ -131,7 +130,7 @@ class MDConv(nn.Module):
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 class MixDepthBlock(nn.Module):
     def __init__(self, in_planes, out_planes,
-                 expand_ratio,  exp_kernel_sizes, kernel_sizes, poi_kernel_sizes, stride, dilate,
+                 expand_ratio, exp_kernel_sizes, kernel_sizes, poi_kernel_sizes, stride, dilate,
                  reduction_ratio=4, dropout_rate=0.2, act_type="swish"):
         super(MixDepthBlock, self).__init__()
         self.dropout_rate = dropout_rate
@@ -155,7 +154,7 @@ class MixDepthBlock(nn.Module):
 
         # step 2. Depth-wise convolution phase
         self.depth_wise = nn.Sequential(OrderedDict([
-            ("conv", MDConv(hidden_dim, kernel_sizes=kernel_sizes, stride=stride,  dilate=dilate)),
+            ("conv", MDConv(hidden_dim, kernel_sizes=kernel_sizes, stride=stride, dilate=dilate)),
             ("norm", nn.BatchNorm2d(hidden_dim, eps=1e-3, momentum=0.01)),
             ("act", Swish(inplace=True) if act_type == "swish" else nn.ReLU(inplace=True))
         ]))
@@ -205,45 +204,45 @@ class MixNet(nn.Module):
         params = {
             's': (16, [
                 # t, c,  n, k,                ek,     pk,     s, d,  a,      se
-                [1, 16,  1, [3],              [1],    [1],    1, 1, "relu",  None],
-                [6, 24,  1, [3],              [1, 1], [1, 1], 2, 1, "relu",  None],
-                [3, 24,  1, [3],              [1, 1], [1, 1], 1, 1, "relu",  None],
-                [6, 40,  1, [3, 5, 7],        [1],    [1],    2, 1, "swish", 2],
-                [6, 40,  3, [3, 5],           [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 80,  1, [3, 5, 7],        [1],    [1, 1], 2, 1, "swish", 4],
-                [6, 80,  2, [3, 5],           [1],    [1, 1], 1, 1, "swish", 4],
-                [6, 120, 1, [3, 5, 7],        [1, 1], [1, 1], 1, 1, "swish", 2],
-                [3, 120, 2, [3, 5, 7, 9],     [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 200, 1, [3, 5, 7, 9, 11], [1],    [1],    2, 1, "swish", 2],
-                [6, 200, 2, [3, 5, 7, 9],     [1],    [1, 1], 1, 1, "swish", 2]
+                [1, 16, 1, [3], [1], [1], 1, 1, "relu", None],
+                [6, 24, 1, [3], [1, 1], [1, 1], 2, 1, "relu", None],
+                [3, 24, 1, [3], [1, 1], [1, 1], 1, 1, "relu", None],
+                [6, 40, 1, [3, 5, 7], [1], [1], 2, 1, "swish", 2],
+                [6, 40, 3, [3, 5], [1, 1], [1, 1], 1, 1, "swish", 2],
+                [6, 80, 1, [3, 5, 7], [1], [1, 1], 2, 1, "swish", 4],
+                [6, 80, 2, [3, 5], [1], [1, 1], 1, 1, "swish", 4],
+                [6, 120, 1, [3, 5, 7], [1, 1], [1, 1], 1, 1, "swish", 2],
+                [3, 120, 2, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 2],
+                [6, 200, 1, [3, 5, 7, 9, 11], [1], [1], 2, 1, "swish", 2],
+                [6, 200, 2, [3, 5, 7, 9], [1], [1, 1], 1, 1, "swish", 2]
             ], 1.0, 1.0, 0.2),
             'm': (24, [
                 # t, c,  n, k,            ek,     pk,     s, d,  a,      se
-                [1, 24,  1, [3],          [1],    [1],    1, 1, "relu",  None],
-                [6, 32,  1, [3, 5, 7],    [1, 1], [1, 1], 2, 1, "relu",  None],
-                [3, 32,  1, [3],          [1, 1], [1, 1], 1, 1, "relu",  None],
-                [6, 40,  1, [3, 5, 7, 9], [1],    [1],    2, 1, "swish", 2],
-                [6, 40,  3, [3, 5],       [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 80,  1, [3, 5, 7],    [1],    [1],    2, 1, "swish", 4],
-                [6, 80,  3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 4],
-                [6, 120, 1, [3],          [1],    [1],    1, 1, "swish", 2],
+                [1, 24, 1, [3], [1], [1], 1, 1, "relu", None],
+                [6, 32, 1, [3, 5, 7], [1, 1], [1, 1], 2, 1, "relu", None],
+                [3, 32, 1, [3], [1, 1], [1, 1], 1, 1, "relu", None],
+                [6, 40, 1, [3, 5, 7, 9], [1], [1], 2, 1, "swish", 2],
+                [6, 40, 3, [3, 5], [1, 1], [1, 1], 1, 1, "swish", 2],
+                [6, 80, 1, [3, 5, 7], [1], [1], 2, 1, "swish", 4],
+                [6, 80, 3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 4],
+                [6, 120, 1, [3], [1], [1], 1, 1, "swish", 2],
                 [3, 120, 3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 200, 1, [3, 5, 7, 9], [1],    [1],    2, 1, "swish", 2],
-                [6, 200, 3, [3, 5, 7, 9], [1],    [1, 1], 1, 1, "swish", 2]
-            ],  1.0, 1.0, 0.25),
+                [6, 200, 1, [3, 5, 7, 9], [1], [1], 2, 1, "swish", 2],
+                [6, 200, 3, [3, 5, 7, 9], [1], [1, 1], 1, 1, "swish", 2]
+            ], 1.0, 1.0, 0.25),
             'l': (24, [
                 # t, c,  n, k,            ek,     pk,     s, d,  a,      se
-                [1, 24,  1, [3],          [1],    [1],    1, 1, "relu",  None],
-                [6, 32,  1, [3, 5, 7],    [1, 1], [1, 1], 2, 1, "relu",  None],
-                [3, 32,  1, [3],          [1, 1], [1, 1], 1, 1, "relu",  None],
-                [6, 40,  1, [3, 5, 7, 9], [1],    [1],    2, 1, "swish", 2],
-                [6, 40,  3, [3, 5],       [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 80,  1, [3, 5, 7],    [1],    [1],    2, 1, "swish", 4],
-                [6, 80,  3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 4],
-                [6, 120, 1, [3],          [1],    [1],    1, 1, "swish", 2],
+                [1, 24, 1, [3], [1], [1], 1, 1, "relu", None],
+                [6, 32, 1, [3, 5, 7], [1, 1], [1, 1], 2, 1, "relu", None],
+                [3, 32, 1, [3], [1, 1], [1, 1], 1, 1, "relu", None],
+                [6, 40, 1, [3, 5, 7, 9], [1], [1], 2, 1, "swish", 2],
+                [6, 40, 3, [3, 5], [1, 1], [1, 1], 1, 1, "swish", 2],
+                [6, 80, 1, [3, 5, 7], [1], [1], 2, 1, "swish", 4],
+                [6, 80, 3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 4],
+                [6, 120, 1, [3], [1], [1], 1, 1, "swish", 2],
                 [3, 120, 3, [3, 5, 7, 9], [1, 1], [1, 1], 1, 1, "swish", 2],
-                [6, 200, 1, [3, 5, 7, 9], [1],    [1],    2, 1, "swish", 2],
-                [6, 200, 3, [3, 5, 7, 9], [1],    [1, 1], 1, 1, "swish", 2]
+                [6, 200, 1, [3, 5, 7, 9], [1], [1], 2, 1, "swish", 2],
+                [6, 200, 3, [3, 5, 7, 9], [1], [1, 1], 1, 1, "swish", 2]
             ], 1.3, 1.0, 0.25),
         }
 
@@ -260,7 +259,7 @@ class MixNet(nn.Module):
             repeats = self._round_repeats(n, depth_multi)
 
             if self.dropout_rate:
-                drop_rate = self.dropout_rate * float(mod_id+1) / len(settings)
+                drop_rate = self.dropout_rate * float(mod_id + 1) / len(settings)
 
             # Create blocks for module
             blocks = []
@@ -325,11 +324,11 @@ class MixNet(nn.Module):
         return int(math.ceil(depth_multi * repeats))
 
     def forward(self, x):
-        x = self.mod2(self.mod1(x))                         # (N, C,   H/2,  W/2)
-        x = self.mod4(self.mod3(x))                         # (N, C,   H/4,  W/4)
-        x = self.mod6(self.mod5(x))                         # (N, C,   H/8,  W/8)
+        x = self.mod2(self.mod1(x))  # (N, C,   H/2,  W/2)
+        x = self.mod4(self.mod3(x))  # (N, C,   H/4,  W/4)
+        x = self.mod6(self.mod5(x))  # (N, C,   H/8,  W/8)
         x = self.mod10(self.mod9(self.mod8(self.mod7(x))))  # (N, C,   H/16, W/16)
-        x = self.mod12(self.mod11(x))                       # (N, C,   H/32, W/32)
+        x = self.mod12(self.mod11(x))  # (N, C,   H/32, W/32)
         x = self.last_feat(x)
 
         x = F.adaptive_avg_pool2d(x, (1, 1)).view(-1, self.last_channels)
@@ -341,5 +340,9 @@ class MixNet(nn.Module):
 
 
 def mixnet_s(): return MixNet(arch="s", num_classes=1000)
+
+
 def mixnet_m(): return MixNet(arch="m", num_classes=1000)
+
+
 def mixnet_l(): return MixNet(arch="l", num_classes=1000)

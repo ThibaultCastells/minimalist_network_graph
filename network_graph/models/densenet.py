@@ -6,7 +6,7 @@ import math
 
 norm_mean, norm_var = 0.0, 1.0
 
-cov_cfg=[(3*i+1) for i in range(12*3+2+1)]
+cov_cfg = [(3 * i + 1) for i in range(12 * 3 + 2 + 1)]
 
 
 class DenseBasicBlock(nn.Module):
@@ -30,6 +30,7 @@ class DenseBasicBlock(nn.Module):
         out = torch.cat((x, out), 1)
 
         return out
+
 
 class Transition(nn.Module):
     def __init__(self, inplanes, outplanes):
@@ -58,7 +59,7 @@ class DenseNet(nn.Module):
 
         transition = Transition
 
-        self.covcfg=cov_cfg
+        self.covcfg = cov_cfg
 
         self.growthRate = growthRate
         self.dropRate = dropRate
@@ -123,6 +124,7 @@ class DenseNet(nn.Module):
 def densenet_40():
     return DenseNet(depth=40, block=DenseBasicBlock)
 
-if __name__== '__main__':
+
+if __name__ == '__main__':
     model = densenet_40()
     print(model)
