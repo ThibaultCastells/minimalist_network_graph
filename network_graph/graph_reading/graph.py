@@ -10,8 +10,8 @@ import inspect
 import numpy as np
 import copy
 
-
 REMOVED_NODES = ["Constant", "FeatureDropout", "Unsqueeze", "Transpose"]
+
 
 ###########################################################################
 # Utility Functions
@@ -45,8 +45,8 @@ class Node():
         self.op = op
         self.repeat = 1
         if output_shape:
-            assert isinstance(output_shape, (tuple, list)),\
-            "output_shape must be a tuple or list but received {}".format(type(output_shape))
+            assert isinstance(output_shape, (tuple, list)), \
+                "output_shape must be a tuple or list but received {}".format(type(output_shape))
         self.output_shape = output_shape
         self.params = params if params else {}
 
@@ -107,7 +107,7 @@ class Graph():
             elif framework == "tensorflow":
                 from .tf_builder import import_graph, FRAMEWORK_TRANSFORMS
                 import_graph(self, model)
-            
+
             # Apply Transforms
             if framework_transforms:
                 if framework_transforms == "default":
@@ -122,20 +122,20 @@ class Graph():
                     t.apply(self)
 
         # remove nodes we don't want:
-        first=True
-        for k,n in list(self.nodes.items()):
+        first = True
+        for k, n in list(self.nodes.items()):
             if n.op in REMOVED_NODES:
                 self.remove(n)
             if len(self.incoming(n)) == 0 and not first:
                 self.remove(n)
                 first = False
         # removed multi-input operations with only one input (may happen )
-        for k,n in list(self.nodes.items()):
+        for k, n in list(self.nodes.items()):
             if n.op in ["Add", "Mul", "Concat", "Div", "Cast"]:
                 if len(self.incoming(n)) <= 1:
                     self.remove(n)
 
-        name_map = dict([(k,f"{i:03d}") for i, k in enumerate(self.nodes)])
+        name_map = dict([(k, f"{i:03d}") for i, k in enumerate(self.nodes)])
         remaped_nodes = {}
         for k, n in self.nodes.items():
             n.id = name_map[k]
@@ -146,14 +146,13 @@ class Graph():
 
         self.node_input, self.node_output = None, None
         for k, n in self.nodes.items():
-            if len(self.incoming(n))==0 and self.node_input is None: self.node_input = n
-            if len(self.outgoing(n))==0 and self.node_output is None: self.node_output = n
+            if len(self.incoming(n)) == 0 and self.node_input is None: self.node_input = n
+            if len(self.outgoing(n)) == 0 and self.node_output is None: self.node_output = n
             if self.node_output is not None and self.node_input is not None: break
         print(f"node_input: {self.node_input.id}")
         print(f"node_output: {self.node_output.id}")
 
         self.get_topological_sort()
-
 
     def id(self, node):
         """Returns a unique node identifier. If the node has an id
@@ -224,7 +223,7 @@ class Graph():
                 for e_out in out_edges:
                     if len(list(filter(lambda e: e[0] == e_in[0] and e[1] == e_out[1], self.edges))) == 0:
                         self.edges.append((e_in[0], e_out[1], ''))
-            
+
             del self.nodes[k]
 
     def replace(self, nodes, node):
@@ -260,16 +259,17 @@ class Graph():
                 return match, following
         return [], None
 
-
-    def sequence_id(self, sequence): return getrandbits(64)
+    def sequence_id(self, sequence):
+        return getrandbits(64)
 
     def get_topological_sort(self, recompute=False):
-        if not hasattr(self,'topological_sort') or recompute:
+        if not hasattr(self, 'topological_sort') or recompute:
             V = len(self.nodes)
-            visited = [False for i in range(V+1)]
-            adj = [[] for i in range(V+1)]
+            visited = [False for i in range(V + 1)]
+            adj = [[] for i in range(V + 1)]
             for e in self.edges: adj[int(e[0])].append(int(e[1]))
             self.topological_sort = []
+
             def topologicalSortUtil(v):
                 visited[v] = True
                 for i in adj[v]:
@@ -290,15 +290,17 @@ class Graph():
             # if child.op not in ['Reshape', 'Unsqueeze', 'Shape'] and 
             if str(child.id) not in self.visited:
 
-                if i==0: print('=============')
-                else: print('-')
+                if i == 0:
+                    print('=============')
+                else:
+                    print('-')
 
                 print(f"Node id  : {str(child.id)}")
                 print(f"Parent   : {[str(p.id) for p in self.incoming(child)]}")
                 print(f"Children : {[str(p.id) for p in self.outgoing(child)]}")
                 print(f"Node op  : {str(child.op)}")
                 print(f"Node params: {str(child.params)}")
-                
+
                 self.visited.append(str(child.id))
                 next_visits.append(child)
                 i += 1
@@ -307,13 +309,14 @@ class Graph():
     def show_connections(self):
         # Node: ['id', 'name', 'op', 'repeat', 'output_shape', 'params', '_caption']
         print()
-        if self.node_input is None: print("Input node not found")
+        if self.node_input is None:
+            print("Input node not found")
         else:
-            self.visited=[str(self.node_input.id)]
+            self.visited = [str(self.node_input.id)]
             print(f"Node id: {str(self.node_input.id)}")
             print(f"Parent : None")
             print(f"Children : {[str(p.id) for p in self.outgoing(self.node_input)]}")
             print(f"Node op: {str(self.node_input.op)}")
             print(f"Node params: {str(self.node_input.params)}")
-            
+
             self.rec_print(self.node_input)

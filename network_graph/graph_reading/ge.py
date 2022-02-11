@@ -6,7 +6,6 @@ Licensed under the MIT License
 import re
 
 
-
 class GEParser():
     def __init__(self, text):
         self.index = 0
@@ -27,7 +26,7 @@ class GEParser():
             return ParallelPattern(expressions)
         # No match. Reset index
         self.index = index
-    
+
     def serial(self):
         index = self.index
         expressions = []
@@ -43,7 +42,7 @@ class GEParser():
 
     def expression(self):
         index = self.index
-        
+
         if self.token("("):
             e = self.serial() or self.parallel() or self.op()
             if e and self.token(")"):
@@ -57,7 +56,7 @@ class GEParser():
         if t:
             c = self.condition()
             return NodePattern(t, c)
-    
+
     def condition(self):
         # TODO: not implemented yet. This function is a placeholder
         index = self.index
@@ -67,12 +66,12 @@ class GEParser():
                 if self.token("]"):
                     return c
             self.index = index
-    
+
     def token(self, s):
         return self.re(r"\s*(" + re.escape(s) + r")\s*", 1)
 
     def string(self, s):
-        if s == self.text[self.index:self.index+len(s)]:
+        if s == self.text[self.index:self.index + len(s)]:
             self.index += len(s)
             return s
 
@@ -81,13 +80,13 @@ class GEParser():
         if m:
             self.index += len(m.group(0))
             return m.group(group)
-            
+
 
 class NodePattern():
     def __init__(self, op, condition=None):
         self.op = op
         self.condition = condition  # TODO: not implemented yet
-    
+
     def match(self, graph, node):
         if isinstance(node, list):
             return [], None
@@ -138,7 +137,7 @@ class ParallelPattern():
         #       all permutations of the nodes
         if len(self.patterns) != len(nodes):
             return [], None
-        
+
         patterns = self.patterns.copy()
         nodes = nodes.copy()
         all_matches = []
@@ -161,5 +160,3 @@ class ParallelPattern():
             if not found:
                 return [], None
         return all_matches, end_node
-
-
