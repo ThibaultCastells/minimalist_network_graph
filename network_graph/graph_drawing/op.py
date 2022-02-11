@@ -14,25 +14,25 @@ class Operation():
         self.diag = math.sqrt(2) * op_size
 
     def draw_square(self, color=None):
-        self.goto(self.x - int(self.op_size / 2), self.y - int(self.op_size / 2))
+        self.goto(self.x - round(self.op_size / 2), self.y - round(self.op_size / 2))
         if color is not None:
             t.fillcolor(color)
             t.begin_fill()
         for _ in range(4):
-            t.forward(int(self.op_size))  # Forward turtle by op_size units
+            t.forward(round(self.op_size))  # Forward turtle by op_size units
             t.left(90)  # Turn turtle by 90 degree
         if color is not None: t.end_fill()
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
     def draw_circle(self, color=None):
         # self.goto(self.x, self.y)
-        self.goto(self.x, self.y - int(self.op_size / 2))
+        self.goto(self.x, self.y - round(self.op_size / 2))
         if color is not None:
             t.fillcolor(color)
             t.begin_fill()
-        t.circle(int(self.op_size / 2))
+        t.circle(round(self.op_size / 2))
         if color is not None: t.end_fill()
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
     def goto(self, x, y):
         t.up()
@@ -64,8 +64,8 @@ class Conv(Operation):
         else:
             self.draw_square(color='#473E00')
         self.goto(self.x, self.y)
-        t.dot(int(self.op_size / 8))
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        t.dot(round(self.op_size / 8))
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class Linear(Operation):
@@ -73,8 +73,8 @@ class Linear(Operation):
         super().__init__(op_size, x, y, params)
         self.draw_square(color='#d79eba')
         self.goto(self.x, self.y)
-        t.dot(int(self.op_size / 8))
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        t.dot(round(self.op_size / 8))
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class Add(Operation):
@@ -83,17 +83,17 @@ class Add(Operation):
         self.draw_circle()
         t.setheading(180)  # 270 south, 0 east, 180 west, 90 north
         t.forward(self.op_size)
-        self.goto(x, y + int(self.op_size / 2))
+        self.goto(x, y + round(self.op_size / 2))
         t.setheading(270)
         t.forward(self.op_size)
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class Mul(Operation):
     def __init__(self, op_size, x, y, params):
         super().__init__(op_size, x, y, params)
         self.draw_circle()
-        r = int(self.op_size / 2)
+        r = round(self.op_size / 2)
         # go to top left
         x_delta = math.cos(math.radians(135)) * r
         y_delta = math.sin(math.radians(135)) * r
@@ -113,20 +113,20 @@ class Mul(Operation):
         y_delta = math.sin(math.radians(270 - 45)) * r
         t.goto(x + x_delta, y + y_delta)
 
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class Concat(Operation):
     def __init__(self, op_size, x, y, params):
         super().__init__(op_size, x, y, params)
         self.draw_square()
-        self.goto(x - int(self.op_size / 2), y + int(self.op_size / 2))
+        self.goto(x - round(self.op_size / 2), y + round(self.op_size / 2))
         t.setheading(270 + 45)  # south east
         t.forward(self.diag)
-        self.goto(x - int(self.op_size / 2), y - int(self.op_size / 2))
+        self.goto(x - round(self.op_size / 2), y - round(self.op_size / 2))
         t.setheading(0 + 45)  # north east
         t.forward(self.diag)
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class Split(Operation):
@@ -135,7 +135,7 @@ class Split(Operation):
         self.draw_square()
         t.setheading(180)  # 270 south, 0 east, 180 west, 90 north
         t.forward(self.op_size)
-        self.goto(self.x + int(self.op_size / 2), self.y)
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 
 class BatchNorm(Operation):

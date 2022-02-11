@@ -50,7 +50,7 @@ class DrawGraph:
         return abs(coord1[0] - coord2[0]) < eps and abs(coord1[1] - coord2[1]) < eps
 
     def draw_nodes_and_edges(self, start_x=0, start_y=0):
-        start_x, start_y = int(start_x), int(start_y)
+        start_x, start_y = round(start_x), round(start_y)
         end_skip_connection = []
         node = self.graph.node_input
         self.drawn_op.add(node.op)
@@ -93,7 +93,7 @@ class DrawGraph:
                     if len(node_coords) > 1: end_skip_connection.append(curr_branches[i - 1])
                     del curr_branches[i - 1]
 
-            self.draw_node(node, x + int(self.op_size / 2), y)
+            self.draw_node(node, x + round(self.op_size / 2), y)
             self.drawn[u] = [x, y]
 
             node_next = self.graph.outgoing(node)
@@ -101,7 +101,7 @@ class DrawGraph:
                 continue  # for the last node, there is no next node
             if len(node_next) > 1:
                 center = center.copy()
-                center.append(int(t.pos()[1]))  # if >1 branches, memorize the y-coord of the last branch
+                center.append(round(t.pos()[1]))  # if >1 branches, memorize the y-coord of the last branch
             coord = self.draw_branches(len(node_next), len(center))
             for i in range(len(node_next)):
                 curr_branches.append((node_next[i], coord[i], center, node.id))
@@ -111,16 +111,16 @@ class DrawGraph:
             x_prev, y_prev = coord
             x_parent, y_parent = self.drawn[int(parent_id)]
             if self.coord_equal([x_prev, y_prev], [x_parent, y_parent]):
-                x_prev += int(self.op_size / 2)
+                x_prev += round(self.op_size / 2)
             x, y = self.drawn[int(node.id)]
 
             self.goto(x_prev, y_prev)
             if self.coord_equal([x, y_prev], [x, y]):  # if prev is not higher/lower
                 t.goto(x, y_prev)
             else:
-                t.goto(x + int(self.op_size / 2), y_prev)
-                t.goto(x + int(self.op_size / 2),
-                       y + (int(self.op_size / 2) if y_prev > y else - int(self.op_size / 2)))
+                t.goto(x + round(self.op_size / 2), y_prev)
+                t.goto(x + round(self.op_size / 2),
+                       y + (round(self.op_size / 2) if y_prev > y else - round(self.op_size / 2)))
             self.goto(x, y)
 
         # update window size to fit the graph:
@@ -129,7 +129,7 @@ class DrawGraph:
         x_max = x_sort_drawn[0][0]
         w = x_max - x_min + 10 * int(self.op_size / 2)
         self.screen.screensize(w, self.h)
-        delta_w = int((self.w - w) / 2)
+        delta_w = round((self.w - w) / 2)
         self.w = w
         for element_id in self.canvas.find_all():
             self.canvas.move(element_id, delta_w, 0)
@@ -144,23 +144,24 @@ class DrawGraph:
 
     def draw_branches(self, n, depth=0):
         # known issue: if branches in branches, then things are drawn on top of each other
-        def int_tuple(tuple): return (int(tuple[0]), int(tuple[1]))
+        def int_tuple(tuple): 
+            return (round(tuple[0]), round(tuple[1]))
         t.setheading(0)
-        t.forward(self.op_size / 2)
+        t.forward(round(self.op_size / 2))
         coord = []
         if n > 1:
-            t.dot(self.op_size / 4)
-            gap = max(8 * self.op_size - 1.5 * (depth * self.op_size), 2 * self.op_size)
+            t.dot(round(self.op_size / 4))
+            gap = max(round(8 * self.op_size - 1.5 * (depth * self.op_size)), round(2 * self.op_size))
             (x0,y0) = int_tuple(t.pos())
-            start = int(y0 + ((n / 2 - 1 / 2) * gap))
+            start = round(y0 + ((n / 2 - 1 / 2) * gap))
             self.goto(x0, start)
             for i in range(n):
                 t.setheading(0)
-                t.forward(self.op_size / 2)
+                t.forward(round(self.op_size / 2))
                 coord.append(int_tuple(t.pos()))
                 if i + 1 < n:
-                    self.forward(self.op_size / 2, 180, draw=False)
-                    if i > 0: t.dot(self.op_size / 4)
+                    self.forward(round(self.op_size / 2), 180, draw=False)
+                    if i > 0: t.dot(round(self.op_size / 4))
                     t.setheading(270)
                     t.forward(gap)
             t.setheading(0)
