@@ -50,6 +50,7 @@ class DrawGraph:
         return abs(coord1[0] - coord2[0]) < eps and abs(coord1[1] - coord2[1]) < eps
 
     def draw_nodes_and_edges(self, start_x=0, start_y=0):
+        start_x, start_y = int(start_x), int(start_y)
         end_skip_connection = []
         node = self.graph.node_input
         self.drawn_op.add(node.op)
@@ -128,7 +129,7 @@ class DrawGraph:
         x_max = x_sort_drawn[0][0]
         w = x_max - x_min + 10 * int(self.op_size / 2)
         self.screen.screensize(w, self.h)
-        delta_w = (self.w - w) / 2
+        delta_w = int((self.w - w) / 2)
         self.w = w
         for element_id in self.canvas.find_all():
             self.canvas.move(element_id, delta_w, 0)
@@ -143,19 +144,20 @@ class DrawGraph:
 
     def draw_branches(self, n, depth=0):
         # known issue: if branches in branches, then things are drawn on top of each other
+        def int_tuple(tuple): return (int(tuple[0]), int(tuple[1]))
         t.setheading(0)
         t.forward(self.op_size / 2)
         coord = []
         if n > 1:
             t.dot(self.op_size / 4)
             gap = max(8 * self.op_size - 1.5 * (depth * self.op_size), 2 * self.op_size)
-            (x0, y0) = t.pos()
-            start = y0 + ((n / 2 - 1 / 2) * gap)
+            (x0,y0) = int_tuple(t.pos())
+            start = int(y0 + ((n / 2 - 1 / 2) * gap))
             self.goto(x0, start)
             for i in range(n):
                 t.setheading(0)
                 t.forward(self.op_size / 2)
-                coord.append(t.pos())
+                coord.append(int_tuple(t.pos()))
                 if i + 1 < n:
                     self.forward(self.op_size / 2, 180, draw=False)
                     if i > 0: t.dot(self.op_size / 4)
@@ -163,7 +165,7 @@ class DrawGraph:
                     t.forward(gap)
             t.setheading(0)
         else:
-            coord.append(t.pos())
+            coord.append(int_tuple(t.pos()))
         return coord
 
     def forward(self, dist, heading, draw=True):
