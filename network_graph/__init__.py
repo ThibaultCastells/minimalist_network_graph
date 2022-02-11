@@ -32,10 +32,22 @@ from . import graph_reading
 from . import graph_drawing
 from . import models
 import torch
-from typing import Any
+from typing import Any, Union, List
 
 
-def draw_net(model: torch.nn.Module, input: Any, debug: bool = False):
+def draw_net(model: torch.nn.Module, input: Union[torch.Tensor, List[torch.Tensor], Any], debug: bool = False):
+    """
+    Draw a schematic view of the network for the given input.
+
+    :param model:
+        A neural network to be drawn.
+    :param input:
+        A sample input that the model can take.
+    :param debug:
+        Whether to print some debugging information.
+        Default: `False`.
+    :return: `None`.
+    """
     model = model.eval()
     graph = graph_reading.Graph(model, input)
     if debug:
