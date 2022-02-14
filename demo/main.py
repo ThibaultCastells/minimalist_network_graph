@@ -33,6 +33,12 @@ def get_args(args=sys.argv[1:]):
         action='store_true',
         help='Mode to display debug information')
 
+    parser.add_argument(
+        '--hide_pytorch_names',
+        default=False,
+        action='store_true',
+        help='Hide the pytorch names of the modules in which nodes are coming from. This can improve the graph generation speed.')
+
     args = parser.parse_args(args)
     return args
 
@@ -42,4 +48,4 @@ if __name__ == '__main__':
     args = get_args()
     model = eval(args.arch)()
     input_size = args.input
-    draw_net(model, torch.empty([1, 3, input_size, input_size]), debug=args.debug)
+    draw_net(model, torch.empty([1, 3, input_size, input_size]), debug=args.debug, match_pytorch_graph=not args.hide_pytorch_names)

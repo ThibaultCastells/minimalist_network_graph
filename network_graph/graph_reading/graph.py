@@ -9,6 +9,10 @@ from random import getrandbits
 import inspect
 import numpy as np
 import copy
+from typing import Any, Union, List
+import torch.nn as nn
+import torch
+from network_graph.graph_reading.module_info import ModuleInfo, ModulesInfo
 
 REMOVED_NODES = ["Constant", "FeatureDropout", "Unsqueeze", "Transpose"]
 
@@ -82,6 +86,17 @@ class Node():
         f += ">"
         return f.format(*args)
 
+    def equal(self, node):
+        # done in 3 steps, to avoid useless operations
+        op_equal = (self.op == node.op)
+        if not op_equal:
+            return False
+        shape_equal = str(self.shape) == str(node.shape)
+        if not shape_equal:
+            return False
+        shared_items = {k: self.params[k] for k in self.params if k in node.params and str(self.params[k]) == str(node.params[k])}
+        params_equal = len(shared_items) == len(self.params) and len(shared_items) == len(node.params)
+        return params_equal
 
 ###########################################################################
 # Graph
@@ -149,8 +164,6 @@ class Graph():
             if len(self.incoming(n)) == 0 and self.node_input is None: self.node_input = n
             if len(self.outgoing(n)) == 0 and self.node_output is None: self.node_output = n
             if self.node_output is not None and self.node_input is not None: break
-        print(f"node_input: {self.node_input.id}")
-        print(f"node_output: {self.node_output.id}")
 
         self.get_topological_sort()
 
@@ -259,6 +272,35 @@ class Graph():
                 return match, following
         return [], None
 
+    def search_node(self, node: Node, candidates: list = None):
+        """ 
+            Return all the nodes of the graph equal to the input node, in between start and end.
+            Args:
+                - node: the node to search for.
+                - candidates: the nodes id of the subgraph in which the node is searched (if None, all nodes are considered). Must be sorted!
+            Returns: a list of nodes id.
+        """
+        if candidates is None: candidates = list(self.nodes.keys())
+        elif len(candidates) == 0: return []
+        # look for the pattern in the graph
+        curr_node_index = 0
+        curr_node_id = candidates[curr_node_index]
+        if not isinstance(curr_node_id, str): curr_node_id = f'{curr_node_id:03d}'
+        curr_node = self.nodes[curr_node_id]
+        matched = []
+
+        while curr_node_index != len(candidates):
+            if curr_node.equal(node):
+                matched.append(curr_node_id)
+        
+            curr_node_index += 1
+            if curr_node_index != len(candidates):
+                curr_node_id = candidates[curr_node_index]
+                if not isinstance(curr_node_id, str): curr_node_id = f'{curr_node_id:03d}'
+                curr_node = self.nodes[curr_node_id]
+        return matched
+            
+
     def sequence_id(self, sequence):
         return getrandbits(64)
 
@@ -320,3 +362,90 @@ class Graph():
             print(f"Node params: {str(self.node_input.params)}")
 
             self.rec_print(self.node_input)
+
+###########################################################################
+# get_pytorch_names
+###########################################################################
+
+def get_pytorch_names(model: torch.nn.Module, graph: Graph, input: Union[torch.Tensor, List[torch.Tensor], Any], verbose=False):
+    """
+        Return the names in the input Pytorch model of the nodes of the input graph.
+        As it requires to create a graph for each module in the model, it may take some time for big models.
+    """
+
+    # create a graph for each node of the model (in order to be able to find the match between pytorch modules and graph nodes)
+    modules = []
+    def rec_visit(module, root=''):
+        for name_block, block in module.named_children():
+            name = name_block if root == '' else root+'.'+name_block 
+            if not isinstance(block, (nn.ModuleList, nn.Dropout)):
+                modules.append(ModuleInfo(block, name))
+            rec_visit(block, name)
+    rec_visit(model)
+    modules = ModulesInfo(model, modules, input_img_size=input.size(2))
+
+    if verbose:
+        print("\nList of modules:")
+        for e in modules.modules():
+            print(e.name)
+        print()
+
+    # put the modules in a dictionary that we can visit recursively
+    model_dict = {}
+    for m in modules:
+        names = m.name.split('.')
+        depth = len(names)
+        curr_dict = model_dict
+        for i, name in enumerate(names):
+            if name not in curr_dict:
+                curr_dict[name] = [None, {}]
+            if i == depth-1:
+                curr_dict[name][0] = m
+            curr_dict = curr_dict[name][1]
+
+    # recursively visit the model and find the matching pytorch modules
+    pytorch_names = []
+    def rec_find_match(modules_dict, candidates=None):
+        if candidates is None: candidates = np.arange(len(graph.nodes))
+        for key in modules_dict:
+            m = modules_dict[key][0]
+            m_children = modules_dict[key][1]
+            if m is not None:
+                input_dim = m.info['input_dim']
+                
+                m_graph = Graph(m.module, torch.zeros(input_dim))
+
+                nb_nodes = len(m_graph.nodes)
+                candidate_inputs = graph.search_node(m_graph.node_input, candidates)
+                candidate_outputs = graph.search_node(m_graph.node_output, candidates)
+
+                if len(candidate_inputs) == 0 or len(candidate_outputs) == 0:
+                    if verbose: 
+                        print("Warning: no matching node found for module %s" % m.name)
+                    continue
+
+                start_point = np.min([int(e) for e in candidate_inputs])
+                theo_end_point = start_point + nb_nodes
+                # look for the closest point to theo_end_point
+                dist = [abs(int(e) - theo_end_point) for e in candidate_outputs]
+                end_point = int(candidate_outputs[np.argmin(dist)])
+                
+                if verbose:
+                    print("---")
+                    print(m.name)
+                    print(f"start_point: {start_point:03d}")
+                    print(f"end_point: {end_point:03d}")
+                pytorch_names.append([start_point, end_point, m.name])
+            else:
+                start_point = candidates[0]
+                end_point = candidates[-1]
+
+            if len(m_children) > 0:
+                children_candidates = [e for e in candidates if int(e) >= start_point and int(e) <= end_point]
+                rec_find_match(m_children, children_candidates)
+
+            if m is not None:
+                candidates = [e for e in candidates if int(e) < start_point or int(e) > end_point]
+            
+    rec_find_match(model_dict)
+    return pytorch_names

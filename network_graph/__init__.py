@@ -34,8 +34,7 @@ from . import models
 import torch
 from typing import Any, Union, List
 
-
-def draw_net(model: torch.nn.Module, input: Union[torch.Tensor, List[torch.Tensor], Any], debug: bool = False):
+def draw_net(model: torch.nn.Module, input: Union[torch.Tensor, List[torch.Tensor], Any], debug: bool = False, match_pytorch_graph: bool = True):
     """
     Draw a schematic view of the network for the given input.
 
@@ -57,7 +56,11 @@ def draw_net(model: torch.nn.Module, input: Union[torch.Tensor, List[torch.Tenso
         graph.show_connections()  # output a written version of the graph (useful for debugging)
         print("-" * 20)
 
-    draw = graph_drawing.DrawGraph(graph, debug=debug)
+    pytorch_names = None
+    if match_pytorch_graph:
+        pytorch_names = graph_reading.get_pytorch_names(model, graph, input, verbose=False)
+        print(model)
+    draw = graph_drawing.DrawGraph(graph, debug=debug, pytorch_names=pytorch_names)
     draw.draw_graph()
 
 

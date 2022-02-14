@@ -6,11 +6,12 @@ import math
 
 class DrawGraph:
 
-    def __init__(self, graph, debug=False):
+    def __init__(self, graph, debug=False, pytorch_names=None):
         self.debug = debug
         self.graph = graph
         self.drawn = [[None, None] for i in range(len(self.graph.nodes))]  # x,y position, index = id
         self.drawn_op = set()  # not used currently, but may be used to draw the legend
+        self.pytorch_names = pytorch_names
 
         self.w, self.h = 1700, 1200
         self.w_canvas, self.h_canvas = 1700, 800
@@ -216,8 +217,11 @@ class DrawGraph:
 
                             x_txt = (self.canvas.xview()[0] - 0.5) * self.w
                             y_txt = (0.5 - self.canvas.yview()[0]) * self.h
+                            delta_y = 23
+                            font = ("Arial", 13, "normal")
+                            curr_y = y_txt - 30
 
-                            self.goto(x_txt + 5, y_txt - 30, turtle=t_info)
+                            self.goto(x_txt + 5, curr_y, turtle=t_info)
                             info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[
                                                                                                          curr_id].op == 'Conv' else ""
                             shape = self.graph[curr_id].shape
@@ -225,18 +229,29 @@ class DrawGraph:
                                 info_in = f"     input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
                                 info_out = f"     output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
                             t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel + info_in + info_out,
-                                         font=("Arial", 12, "normal"))
+                                         font=font)
 
-                            self.goto(x_txt + 5, y_txt - 52, turtle=t_info)
+                            curr_y -= delta_y
+                            self.goto(x_txt + 5, curr_y, turtle=t_info)
                             t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}",
-                                         font=("Arial", 12, "normal"))
-                            self.goto(x_txt + 5, y_txt - 74, turtle=t_info)
+                                         font=font)
+                            curr_y -= delta_y
+                            self.goto(x_txt + 5, curr_y, turtle=t_info)
                             t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}",
-                                         font=("Arial", 12, "normal"))
+                                         font=font)
+
+                            if self.pytorch_names is not None:
+                                id_matches = [i for i in self.pytorch_names if i[0] <= int(curr_id) and i[1] >= int(curr_id)]
+                                if len(id_matches) > 0:
+                                    curr_y -= delta_y
+                                    self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                    t_info.write(f"PyTorch name: {id_matches[-1][2]}", font=font)
+
 
                             if self.debug:
-                                self.goto(x_txt + 5, y_txt - 96, turtle=t_info)
-                                t_info.write(f"pos: {self.drawn[i]}", font=("Arial", 12, "normal"))
+                                curr_y -= delta_y
+                                self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                t_info.write(f"pos: {self.drawn[i]}", font=font)
 
                             self.last_seen = curr_id
                         return
