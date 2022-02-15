@@ -9,6 +9,7 @@ from network_graph.models import *
 
 import os
 import argparse
+import ast
 
 
 # ======================= PARSER =======================
@@ -17,9 +18,12 @@ def get_args(args=sys.argv[1:]):
 
     parser.add_argument(
         '--input',
-        type=int,
+        type=str,
         default=224,
-        help='Input data size')
+        help='Input data size.\n\
+            if int: the input will be a square image of dim [1,3,input,input]\n\
+            if list: the input will use the list as dimensions\n\
+            if tuple: each element in the tuple will be considered as an independent input')
 
     parser.add_argument(
         '--arch',
@@ -47,5 +51,22 @@ def get_args(args=sys.argv[1:]):
 if __name__ == '__main__':
     args = get_args()
     model = eval(args.arch)()
-    input_size = args.input
-    draw_net(model, torch.empty([1, 3, input_size, input_size]), debug=args.debug, match_pytorch_graph=not args.hide_pytorch_names)
+
+    input = ast.literal_eval(args.input)
+    if isinstance(input, list):
+        input = torch.empty(input)
+    elif isinstance(input, tuple):
+        # tuple of inputs (if multiple distinct inputs)
+        tmp_input = []
+        for elem in input:
+            if isinstance(elem, list):
+                tmp_input.append(torch.empty(elem))
+            else:
+                tmp_input.append(torch.empty([1, 3, elem, elem]))
+        input = tuple(tmp_input)
+    else:
+        # by default, we assume a square input with 3 channels
+        input = torch.empty([1, 3, int(args.input), int(args.input)])
+
+
+    draw_net(model, input, debug=args.debug, match_pytorch_graph=not args.hide_pytorch_names)

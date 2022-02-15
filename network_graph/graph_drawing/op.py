@@ -50,19 +50,22 @@ class Unspecified(Operation):
 class Conv(Operation):
     def __init__(self, op_size, x, y, params):
         super().__init__(op_size, x, y, params)
-        kernel_shape = params['kernel_shape']
-        if 1 in kernel_shape:
-            self.draw_square(color='#FAF0B3')
-        elif 3 in kernel_shape:
-            self.draw_square(color='#F1D526')
-        elif 5 in kernel_shape:
-            self.draw_square(color='#D6B900')
-        elif 7 in kernel_shape:
-            self.draw_square(color='#A79000')
-        elif 9 in kernel_shape:
-            self.draw_square(color='#776700')
+        if 'kernel_shape' in params:
+            kernel_shape = params['kernel_shape']
+            if 1 in kernel_shape:
+                self.draw_square(color='#FAF0B3')
+            elif 3 in kernel_shape:
+                self.draw_square(color='#F1D526')
+            elif 5 in kernel_shape:
+                self.draw_square(color='#D6B900')
+            elif 7 in kernel_shape:
+                self.draw_square(color='#A79000')
+            elif 9 in kernel_shape:
+                self.draw_square(color='#776700')
+            else:
+                self.draw_square(color='#473E00')
         else:
-            self.draw_square(color='#473E00')
+            self.draw_square(color='#FAF0B3')
         self.goto(self.x, self.y)
         t.dot(round(self.op_size / 8))
         self.goto(self.x + round(self.op_size / 2), self.y)

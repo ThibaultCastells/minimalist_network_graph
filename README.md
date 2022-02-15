@@ -15,6 +15,8 @@ The code to draw the graph is my own code, and I used [Turtle graphics](https://
 PYTHONPATH=. python3 demo/main.py --arch arch_name --input input_size
 ```
 By default, `--arch` is resnet_50 and `--input` is 224.
+If your model doesn't use square images or 3 input channels, you can specify the exact input shape as a list (example: `--input '[1, 4, 224, 224]'`).
+If you have a model that requires multiple inputs, you can write them as tuple (example: `--input '(224, 224)'` or `--input '([1, 3, 224, 224], [1, 3, 224, 224])'`).
 
 Options for `--arch` (feel free to add more in *[models](network_graph/models/)*): 
 
@@ -49,7 +51,7 @@ with optional arguments described above.
 
 ## Explanation of the view
 
-The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the parents and children nodes (and the position of the node in the screen, in debug mode).
+The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the node input and output shape, and the parents and children nodes (and the position of the node in the screen, in debug mode).
 
 The legend isn't printed (since we can get the info by hovering the mouse over the nodes), but the most important things to know are: yellow with a dot is conv (different shades for different kernel size), purple-ish is ReLU, green is BN, pink with a dot is Linear.
 
@@ -75,7 +77,7 @@ If you want to add a model, put the architecture file in *[models](network_graph
 
 If there is a specific operation that you don't want to see, you can add it in the *REMOVED_NODES* list in *[graph.py](network_graph/graph_reading/graph.py)*.
 
-Also, if you have improvement ideas or if you want to contribute, you can send me a message :)
+Also, if you have improvement ideas or if you want to contribute, you are welcome to open an issue or a pull request!
 
 ## Known issues
 
@@ -88,6 +90,25 @@ RuntimeError: step!=1 is currently not supported
 This is due too the *torch.onnx._optimize_trace* function that doesn't support step>1 slices (so for instance, you can't do *x[::2]*).
 
 - For complex connections (such as in atomnas model), some connections are drawn on top of each other, so it may be hard to understand. In this situation, you can use the text info (top left) to know the children and parents of each nodes.
+
+- Models that contain completely independent graphes won't work (however, it isn't a common scenario). Example:
+
+``` python
+class FOO(nn.Module):
+    def __init__(self, in_channels):
+        super(FOO, self).__init__()
+        self.conv = torch.nn.Conv2d(in_channels, in_channels, 3)
+        self.conv1 = torch.nn.Conv2d(in_channels, 2, 3)
+        self.conv2 = torch.nn.Conv2d(in_channels, 2, 3)
+
+    def forward(self, input1, input2):
+        input1 = self.conv(input1)
+        input2 = self.conv(input2)
+        return self.conv1(input1), self.conv2(input2)
+```
+
+In this scenario, we have 2 distinct graphs: 1) input1 => conv => conv1 and 2) input2 => conv => conv2. therefore, it won't work.
+However, if we add an interaction between these 2 graphs, there won't be any issue (example: if conv1 and conv2 take input1+input2 as input)
 
 ## Requirements :wrench:
 * pytorch

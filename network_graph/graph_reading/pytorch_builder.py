@@ -55,11 +55,11 @@ def get_shape(torch_node):
     return [in_shape, out_shape]
 
 
-def import_graph(hl_graph, model, args, input_names=None, verbose=False):
+def import_graph(hl_graph, model, input, verbose=False):
     # TODO: add input names to graph
 
     # Run the Pytorch graph to get a trace and generate a graph from it
-    trace, out = torch.jit._get_trace_graph(model, args)
+    trace, out = torch.jit._get_trace_graph(model, input)
     # print(trace)
 
     # https://github.com/pytorch/pytorch/blob/4737ae7a16e75958efd8e0177af8a1b570e9227d/torch/onnx/__init__.py#L328
@@ -70,8 +70,6 @@ def import_graph(hl_graph, model, args, input_names=None, verbose=False):
         dump_pytorch_graph(torch_graph)
 
     # Loop through nodes and build HL graph
-
-    import inspect
     for torch_node in torch_graph.nodes():
         # Op
         op = torch_node.kind()

@@ -106,8 +106,7 @@ class Node():
 class Graph():
     """Tracks nodes and edges of a directed graph and supports basic operations on them."""
 
-    def __init__(self, model=None, args=None, input_names=None,
-                 transforms="default", framework_transforms="default"):
+    def __init__(self, model=None, input=None, transforms="default", framework_transforms="default"):
         from collections import OrderedDict
         self.nodes = OrderedDict({})
         self.edges = []
@@ -117,8 +116,8 @@ class Graph():
             framework = detect_framework(model)
             if framework == "torch":
                 from .pytorch_builder import import_graph, FRAMEWORK_TRANSFORMS
-                assert args is not None, "Argument args must be provided for Pytorch models."
-                import_graph(self, model, args)
+                assert input is not None, "Argument input must be provided for Pytorch models."
+                import_graph(self, model, input)
             elif framework == "tensorflow":
                 from .tf_builder import import_graph, FRAMEWORK_TRANSFORMS
                 import_graph(self, model)
@@ -144,12 +143,14 @@ class Graph():
             if len(self.incoming(n)) == 0 and not first:
                 self.remove(n)
                 first = False
+
         # removed multi-input operations with only one input (may happen )
         for k, n in list(self.nodes.items()):
             if n.op in ["Add", "Mul", "Concat", "Div", "Cast"]:
                 if len(self.incoming(n)) <= 1:
                     self.remove(n)
 
+        # remap nodes to be number between 0 and len(nodes)-1
         name_map = dict([(k, f"{i:03d}") for i, k in enumerate(self.nodes)])
         remaped_nodes = {}
         for k, n in self.nodes.items():
@@ -159,13 +160,39 @@ class Graph():
         for i in range(len(self.edges)):
             self.edges[i] = (name_map[self.edges[i][0]], name_map[self.edges[i][1]], self.edges[i][2])
 
+        # find model input and output
         self.node_input, self.node_output = None, None
         for k, n in self.nodes.items():
             if len(self.incoming(n)) == 0 and self.node_input is None: self.node_input = n
             if len(self.outgoing(n)) == 0 and self.node_output is None: self.node_output = n
             if self.node_output is not None and self.node_input is not None: break
 
+        # find topological order
         self.get_topological_sort()
+
+        # reorder nodes to be in topological order
+        self.nodes = OrderedDict( [ (f'{v:03d}', self.nodes[f'{v:03d}']) for v in self.topological_sort[::-1] ] )
+
+        # remap nodes so that the indexes fit the new order
+        name_map = dict([(k, f"{i:03d}") for i, k in enumerate(self.nodes)])
+        remaped_nodes = {}
+        for k, n in self.nodes.items():
+            n.id = name_map[k]
+            remaped_nodes[name_map[k]] = n
+        self.nodes = remaped_nodes
+        for i in range(len(self.edges)):
+            self.edges[i] = (name_map[self.edges[i][0]], name_map[self.edges[i][1]], self.edges[i][2])
+
+        # update topological order (no need to recompute, since the nodes are in topological order)
+        self.topological_sort = list(np.arange(len(self.nodes))[::-1])
+
+        # update input and output nodes
+        self.node_output = self.nodes[f'{len(self.nodes)-1:03d}']
+        if isinstance(input, tuple):
+            self.node_input = [self.nodes[f'{i:03d}'] for i in range(len(input))]
+        else:
+            self.node_input = self.nodes[f'{0:03d}']
+
 
     def id(self, node):
         """Returns a unique node identifier. If the node has an id
@@ -350,18 +377,17 @@ class Graph():
 
     def show_connections(self):
         # Node: ['id', 'name', 'op', 'repeat', 'shape', 'params', '_caption']
-        print()
-        if self.node_input is None:
-            print("Input node not found")
-        else:
-            self.visited = [str(self.node_input.id)]
-            print(f"Node id: {str(self.node_input.id)}")
+        self.visited = []
+        node_input = self.node_input if isinstance(self.node_input, tuple) else [self.node_input]
+        for n in node_input:
+            self.visited.append(str(n.id))
+            print('=============')
+            print(f"Node id: {str(n.id)}")
             print(f"Parent : None")
-            print(f"Children : {[str(p.id) for p in self.outgoing(self.node_input)]}")
-            print(f"Node op: {str(self.node_input.op)}")
-            print(f"Node params: {str(self.node_input.params)}")
-
-            self.rec_print(self.node_input)
+            print(f"Children : {[str(p.id) for p in self.outgoing(n)]}")
+            print(f"Node op: {str(n.op)}")
+            print(f"Node params: {str(n.params)}")
+            self.rec_print(n)
 
 ###########################################################################
 # get_pytorch_names
@@ -382,7 +408,15 @@ def get_pytorch_names(model: torch.nn.Module, graph: Graph, input: Union[torch.T
                 modules.append(ModuleInfo(block, name))
             rec_visit(block, name)
     rec_visit(model)
-    modules = ModulesInfo(model, modules, input_img_size=input.size(2))
+
+    device = next(model.parameters()).device
+    if isinstance(input, tuple):
+        input_name = inspect.getfullargspec(model.forward)[0][1:]
+        input = {input_name[i]: input[i].to(device) for i in range(len(input))}
+    else:
+        input = input.to(device)
+
+    modules = ModulesInfo(model, modules, input)
 
     if verbose:
         print("\nList of modules:")
@@ -412,7 +446,6 @@ def get_pytorch_names(model: torch.nn.Module, graph: Graph, input: Union[torch.T
             m_children = modules_dict[key][1]
             if m is not None:
                 input_dim = m.info['input_dim']
-                
                 m_graph = Graph(m.module, torch.zeros(input_dim))
 
                 nb_nodes = len(m_graph.nodes)

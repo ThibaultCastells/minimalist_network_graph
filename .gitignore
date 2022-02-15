@@ -174,4 +174,4 @@ result/
 run.py
 test_img/
 weights/
-
+*foo.py

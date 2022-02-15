@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
-
+import inspect
 
 class ModuleInfo():
     """
@@ -26,13 +26,11 @@ class ModulesInfo:
         - modulesInfo: a list of ModuleInfo objects
         - input_img_size: the size of the input image, for the feed-forwarding
     """
-    def __init__(self, model, modulesInfo, input_img_size=None):
+    def __init__(self, model, modulesInfo, input):
         self.model = model
         self.device = next(self.model.parameters()).device
         self.modulesInfo = modulesInfo
-        if input_img_size:
-            input_image = torch.randn(1, 3, input_img_size, input_img_size)#.cuda()
-            self.feed(input_image)
+        self.feed(input)
 
     def _make_feed_hook(self, i):
         def hook(m, x, z):
@@ -52,13 +50,13 @@ class ModulesInfo:
                 self.modulesInfo[i].info['w'] = int(x[0].size(3)) if len(x[0].size())>2 else 1
         return hook
 
-    def feed(self, input_image):
+    def feed(self, input):
         hook_handles = [e.module.register_forward_hook(self._make_feed_hook(i)) for i, e in enumerate(self.modulesInfo)]
 
-        if self.device is not None:
-            self.model(input_image.to(self.device))
+        if isinstance(input, dict):
+            self.model(**input)
         else:
-            self.model(input_image)
+            self.model(input)
 
         for handle in hook_handles:
             handle.remove()

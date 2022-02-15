@@ -42,6 +42,7 @@ class DrawGraph:
                 x: x position (of the center of the node)
                 y: y position (of the center of the node)
         """
+        self.drawn_op.add(node.op)
         if node.op in SUPPORTED_OPERATIONS:
             eval(f"{node.op}(self.op_size, {x}, {y}, {node.params})")
         else:
@@ -53,19 +54,15 @@ class DrawGraph:
     def draw_nodes_and_edges(self, start_x=0, start_y=0):
         start_x, start_y = round(start_x), round(start_y)
         end_skip_connection = []
-        node = self.graph.node_input
-        self.drawn_op.add(node.op)
-        node_next = self.graph.outgoing(node)
 
-        self.draw_node(node, start_x, start_y)
-        self.drawn[int(node.id)] = [start_x, start_y]
+        self.goto(start_x, start_y)
 
-        coord = self.draw_branches(len(node_next))
-
-        curr_branches = [(node_next[i], coord[i], ([] if len(node_next) == 1 else [start_y]), node.id) for i in
-                         range(len(node_next))]
+        node_input = self.graph.node_input if isinstance(self.graph.node_input, list) else [self.graph.node_input]
+        coord = self.draw_branches(len(node_input), pen_up=True)
+        curr_branches = [(node_input[i], coord[i], ([] if len(node_input) == 1 else [start_y]), None) for i in
+                         range(len(node_input))]
         topological_sort = self.graph.get_topological_sort()
-        del topological_sort[-1]  # remove the input node, as we already visited it
+        # del topological_sort[-1]  # remove the input node, as we already visited it
 
         # go through the graph in topological order
         while (len(topological_sort) > 0):
@@ -129,6 +126,8 @@ class DrawGraph:
         x_min = x_sort_drawn[-2][0]
         x_max = x_sort_drawn[0][0]
         w = x_max - x_min + 10 * int(self.op_size / 2)
+        if w < self.w_canvas:
+            w = self.w_canvas
         self.screen.screensize(w, self.h)
         delta_w = round((self.w - w) / 2)
         self.w = w
@@ -143,35 +142,36 @@ class DrawGraph:
         # draw a legend for the op (only legend the op that are present in this graph)
         return
 
-    def draw_branches(self, n, depth=0):
+    def draw_branches(self, n, depth=0, pen_up=False):
         # known issue: if branches in branches, then things are drawn on top of each other
         def int_tuple(tuple): 
             return (round(tuple[0]), round(tuple[1]))
         t.setheading(0)
-        t.forward(round(self.op_size / 2))
+        self.forward(round(self.op_size / 2), draw=(not pen_up))
         coord = []
         if n > 1:
-            t.dot(round(self.op_size / 4))
+            if not pen_up:
+                t.dot(round(self.op_size / 4))
             gap = max(round(8 * self.op_size - 1.5 * (depth * self.op_size)), round(2 * self.op_size))
             (x0,y0) = int_tuple(t.pos())
             start = round(y0 + ((n / 2 - 1 / 2) * gap))
             self.goto(x0, start)
             for i in range(n):
                 t.setheading(0)
-                t.forward(round(self.op_size / 2))
+                self.forward(round(self.op_size / 2), draw=(not pen_up))
                 coord.append(int_tuple(t.pos()))
                 if i + 1 < n:
                     self.forward(round(self.op_size / 2), 180, draw=False)
                     if i > 0: t.dot(round(self.op_size / 4))
                     t.setheading(270)
-                    t.forward(gap)
+                    self.forward(gap, draw=(not pen_up))
             t.setheading(0)
         else:
             coord.append(int_tuple(t.pos()))
         return coord
 
-    def forward(self, dist, heading, draw=True):
-        t.setheading(heading)
+    def forward(self, dist, heading=None, draw=True):
+        if heading is not None: t.setheading(heading)
         if not draw: t.up()
         t.forward(dist)
         if not draw: t.down()
@@ -222,14 +222,23 @@ class DrawGraph:
                             curr_y = y_txt - 30
 
                             self.goto(x_txt + 5, curr_y, turtle=t_info)
-                            info_kernel = f"     k: {self.graph[curr_id].params['kernel_shape']}" if self.graph[
-                                                                                                         curr_id].op == 'Conv' else ""
+                            
+                            info_conv = "  "
+                            if self.graph[curr_id].op == 'Conv':
+                                if 'kernel_shape' in self.graph[curr_id].params:
+                                    info_conv += f"  |  k: {self.graph[curr_id].params['kernel_shape']}"
+                                if 'group' in self.graph[curr_id].params:
+                                    info_conv += f"  |  group: {self.graph[curr_id].params['group']}"
+                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_conv, font=font)
+
                             shape = self.graph[curr_id].shape
                             if shape is not None:
-                                info_in = f"     input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
-                                info_out = f"     output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_kernel + info_in + info_out,
-                                         font=font)
+                                curr_y -= delta_y
+                                self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                info_in = f"input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
+                                info_out = f"output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
+                                separator = " | " if info_in != "" and info_out != "" else ""
+                                t_info.write(f"{info_in}{separator}{info_out}", font=font)
 
                             curr_y -= delta_y
                             self.goto(x_txt + 5, curr_y, turtle=t_info)
