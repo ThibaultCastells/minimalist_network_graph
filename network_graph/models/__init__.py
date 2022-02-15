@@ -8,4 +8,6 @@ from .shufflenetv2_plus import shufflenetv2plus_small
 from .vgg import vgg_16_bn
 from .googlenet import googlenet
 from .densenet import densenet_40
-# from .resnet_cifar10 import resnet_56, resnet_110 # not working because of ::2
+from .resnet_cifar10 import resnet_56, resnet_110
+
+from .unet_model import unet

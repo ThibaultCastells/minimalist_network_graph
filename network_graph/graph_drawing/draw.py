@@ -26,6 +26,8 @@ class DrawGraph:
         t.hideturtle()
         t.tracer(0)
 
+        t.title("Minimalist Network Graph")
+
         self.init_events()
 
     def create_canvas(self):
@@ -62,7 +64,6 @@ class DrawGraph:
         curr_branches = [(node_input[i], coord[i], ([] if len(node_input) == 1 else [start_y]), None) for i in
                          range(len(node_input))]
         topological_sort = self.graph.get_topological_sort()
-        # del topological_sort[-1]  # remove the input node, as we already visited it
 
         # go through the graph in topological order
         while (len(topological_sort) > 0):
@@ -73,7 +74,13 @@ class DrawGraph:
 
             node_coords = [e for e in curr_branches if e[0].id == node_id]  # [(next_node, coord, center, node_id)]
 
-            if len(node_coords) == 1:
+            if len(node_coords) == 0:
+                # this is an imperfect way to solve the problem of a branch not starting from a node.
+                # it simply removes this branch
+                print(node)
+                self.drawn[u] = [0, 0]
+                continue
+            elif len(node_coords) == 1:
                 node_coord = node_coords[0]
                 x, y = node_coord[1]
                 center = node_coord[2]

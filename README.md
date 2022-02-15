@@ -32,6 +32,7 @@ input 32:
 - vgg_16_bn
 - googlenet
 - densenet_40
+- resnet_56, resnet_110
 
 ## Installation
 
@@ -77,14 +78,6 @@ If there is a specific operation that you don't want to see, you can add it in t
 Also, if you have improvement ideas or if you want to contribute, you are welcome to open an issue or a pull request!
 
 ## Known issues
-
-- If you use a model that contains slices with step>1, then you will get the following error: 
-
-```
-RuntimeError: step!=1 is currently not supported
-```
-
-This is due too the *torch.onnx._optimize_trace* function that doesn't support step>1 slices (so for instance, you can't do *x[::2]*).
 
 - For complex connections (such as in atomnas model), some connections are drawn on top of each other, so it may be hard to understand. In this situation, you can use the text info (top left) to know the children and parents of each nodes.
 

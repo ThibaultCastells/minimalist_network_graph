@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch
 from network_graph.graph_reading.module_info import ModuleInfo, ModulesInfo
 
-REMOVED_NODES = ["Constant", "FeatureDropout", "Unsqueeze", "Transpose"]
+REMOVED_NODES = ["Constant", "FeatureDropout"]
 
 
 ###########################################################################
@@ -75,16 +75,13 @@ class Node():
         return title
 
     def __repr__(self):
-        args = (self.op, self.name, self.id, self.title, self.repeat)
-        f = "<Node: op: {}, name: {}, id: {}, title: {}, repeat: {}"
+        f = f"<Node: id: {self.id}, op: {self.op}"
         if self.shape:
-            args += (str(self.shape),)
-            f += ", shape: {:}"
+            f += f", shape: {str(self.shape)}"
         if self.params:
-            args += (str(self.params),)
-            f += ", params: {:}"
+            f += f", params: {str(self.params)}"
         f += ">"
-        return f.format(*args)
+        return f
 
     def equal(self, node):
         # done in 3 steps, to avoid useless operations
@@ -146,12 +143,12 @@ class Graph():
 
         # removed multi-input operations with only one input (may happen )
         for k, n in list(self.nodes.items()):
-            if n.op in ["Add", "Mul", "Concat", "Div", "Cast"]:
+            if n.op in ["Add", "Mul", "Concat", "Div", "Cast", "Sub"]:
                 if len(self.incoming(n)) <= 1:
                     self.remove(n)
 
         # remap nodes to be number between 0 and len(nodes)-1
-        name_map = dict([(k, f"{i:03d}") for i, k in enumerate(self.nodes)])
+        name_map = dict([(k, f"{(len(self.nodes)-1-i):03d}") for i, k in enumerate(self.nodes)])
         remaped_nodes = {}
         for k, n in self.nodes.items():
             n.id = name_map[k]
@@ -404,7 +401,10 @@ def get_pytorch_names(model: torch.nn.Module, graph: Graph, input: Union[torch.T
     def rec_visit(module, root=''):
         for name_block, block in module.named_children():
             name = name_block if root == '' else root+'.'+name_block 
-            if not isinstance(block, (nn.ModuleList, nn.Dropout)):
+            is_valid = not isinstance(block, (nn.ModuleList, nn.Dropout))
+            is_valid = is_valid and not (isinstance(block, nn.Sequential) and sum(1 for _ in block.named_children()) == 0)
+            is_valid = is_valid and len(inspect.getfullargspec(block.forward)[0][1:]) == 1
+            if is_valid:
                 modules.append(ModuleInfo(block, name))
             rec_visit(block, name)
     rec_visit(model)

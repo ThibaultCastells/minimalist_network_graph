@@ -8,6 +8,7 @@ import re
 from .graph import Graph, Node
 from . import transforms as ht
 import torch
+from torch.onnx.symbolic_helper import _set_opset_version
 
 # PyTorch Graph Transforms
 FRAMEWORK_TRANSFORMS = [
@@ -62,7 +63,7 @@ def import_graph(hl_graph, model, input, verbose=False):
     trace, out = torch.jit._get_trace_graph(model, input)
     # print(trace)
 
-    # https://github.com/pytorch/pytorch/blob/4737ae7a16e75958efd8e0177af8a1b570e9227d/torch/onnx/__init__.py#L328
+    _set_opset_version(12)
     torch_graph = torch.onnx._optimize_trace(trace, torch.onnx.OperatorExportTypes.ONNX)
 
     # Dump list of nodes (DEBUG only)
