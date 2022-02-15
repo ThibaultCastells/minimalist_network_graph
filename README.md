@@ -51,14 +51,11 @@ with optional arguments described above.
 
 ## Explanation of the view
 
-The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type, the node input and output shape, and the parents and children nodes (and the position of the node in the screen, in debug mode).
+The info printed at the top left corner appears when the mouse is over an operation. It indicates the node id, the operation type (as well as the kernel size and number of groups for Convolutions), the node input and output shape, the parents and children nodes, and the corresponding name in Pytorch (can be removed for optimization purposes with `--hide_pytorch_names`).
 
 The legend isn't printed (since we can get the info by hovering the mouse over the nodes), but the most important things to know are: yellow with a dot is conv (different shades for different kernel size), purple-ish is ReLU, green is BN, pink with a dot is Linear.
 
-ResNet 50 (*resnet_50*):
-![resnet_50](./demo/resnet50.png)
-
-MixNet large (*mixnet_l*):
+Example: MixNet large (*mixnet_l*):
 ![mixnet_l](./demo/mixnet_l.png)
 
 ## Mouse commands
