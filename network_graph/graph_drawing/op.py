@@ -3,7 +3,7 @@ import turtle as t
 import math
 
 SUPPORTED_OPERATIONS = ['Add', 'Mul', 'Concat', 'Split', 'BatchNorm', 'Conv', 'Linear', 'Relu', 'Sigmoid',
-                        'GlobalAveragePool', 'AveragePool', 'MaxPool']
+                        'GlobalAveragePool', 'AveragePool', 'MaxPool', 'Slice']
 
 
 class Operation():
@@ -140,6 +140,19 @@ class Split(Operation):
         t.forward(self.op_size)
         self.goto(self.x + round(self.op_size / 2), self.y)
 
+class Slice(Operation):
+    def __init__(self, op_size, x, y, params):
+        super().__init__(op_size, x, y, params)
+        self.draw_square()
+        self.goto(self.x + round((1/6)*self.op_size), self.y - round(self.op_size/4))
+        t.dot(round(self.op_size/8))
+        self.goto(self.x + round((1/6)*self.op_size), self.y + round(self.op_size/4))
+        t.dot(round(self.op_size/8))
+        self.goto(self.x - round((1/6)*self.op_size), self.y - round(self.op_size/4))
+        t.dot(round(self.op_size/8))
+        self.goto(self.x - round((1/6)*self.op_size), self.y + round(self.op_size/4))
+        t.dot(round(self.op_size/8))
+        self.goto(self.x + round(self.op_size / 2), self.y)
 
 class BatchNorm(Operation):
     def __init__(self, op_size, x, y, params):

@@ -69,6 +69,7 @@ def import_graph(hl_graph, model, input, verbose=False):
     if verbose:
         dump_pytorch_graph(torch_graph)
 
+    all_target_inputs = [set([i.unique() for i in target_torch_node.inputs()]) for target_torch_node in torch_graph.nodes()]
     # Loop through nodes and build HL graph
     for torch_node in torch_graph.nodes():
         # Op
@@ -77,15 +78,15 @@ def import_graph(hl_graph, model, input, verbose=False):
         params = {k: torch_node[k] for k in torch_node.attributeNames()}
         # Inputs/outputs
         # TODO: inputs = [i.unique() for i in node.inputs()]
-        outputs = [o.unique() for o in torch_node.outputs()]
+        outputs = set([o.unique() for o in torch_node.outputs()])
         # Get output shape
         shape = get_shape(torch_node)
         # Add HL node
         hl_node = Node(uid=pytorch_id(torch_node), op=op, shape=shape, params=params)
         hl_graph.add_node(hl_node)
         # Add edges
-        for target_torch_node in torch_graph.nodes():
-            target_inputs = [i.unique() for i in target_torch_node.inputs()]
-            if set(outputs) & set(target_inputs):
+        for i, target_torch_node in enumerate(torch_graph.nodes()):
+            if outputs & all_target_inputs[i]:
                 hl_graph.add_edge_by_id(pytorch_id(torch_node), pytorch_id(target_torch_node), shape)
+
     return hl_graph
