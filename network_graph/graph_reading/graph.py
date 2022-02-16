@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch
 from network_graph.graph_reading.module_info import ModuleInfo, ModulesInfo
 
-REMOVED_NODES = ["Constant", "FeatureDropout"]
+REMOVED_NODES = ["Constant", "FeatureDropout", "Shape", "Gather", "Unsqueeze", "ConstantOfShape", "prim::Constant"]
 
 
 ###########################################################################
@@ -38,14 +38,12 @@ def detect_framework(value):
 class Node():
     """Represents a framework-agnostic neural network layer in a directed graph."""
 
-    def __init__(self, uid, name, op, shape=None, params=None):
+    def __init__(self, uid, op, shape=None, params=None):
         """
         uid: unique ID for the layer that doesn't repeat in the computation graph.
-        name: Name to display
         op: Framework-agnostic operation name.
         """
         self.id = uid
-        self.name = name  # TODO: clarify the use of op vs name vs title
         self.op = op
         self.repeat = 1
         if shape:
@@ -53,26 +51,6 @@ class Node():
                 "shape must be a tuple or list but received {}".format(type(shape))
         self.shape = shape
         self.params = params if params else {}
-
-    @property
-    def title(self):
-        # Default
-        title = self.name or self.op
-
-        if "kernel_shape" in self.params:
-            # Kernel
-            kernel = self.params["kernel_shape"]
-            title += "x".join(map(str, kernel))
-        if "stride" in self.params:
-            stride = self.params["stride"]
-            if np.unique(stride).size == 1:
-                stride = stride[0]
-            if stride != 1:
-                title += "/s{}".format(str(stride))
-        #         # Transposed
-        #         if node.transposed:
-        #             name = "Transposed" + name
-        return title
 
     def __repr__(self):
         f = f"<Node: id: {self.id}, op: {self.op}"
@@ -373,7 +351,7 @@ class Graph():
         for child in next_visits: self.rec_print(child)
 
     def show_connections(self):
-        # Node: ['id', 'name', 'op', 'repeat', 'shape', 'params', '_caption']
+        # Node: ['id', 'op', 'repeat', 'shape', 'params', '_caption']
         self.visited = []
         node_input = self.node_input if isinstance(self.node_input, tuple) else [self.node_input]
         for n in node_input:

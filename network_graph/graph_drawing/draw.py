@@ -77,8 +77,8 @@ class DrawGraph:
             if len(node_coords) == 0:
                 # this is an imperfect way to solve the problem of a branch not starting from a node.
                 # it simply removes this branch
-                print(node)
                 self.drawn[u] = [0, 0]
+                # print(f"{u}: {node.op}")
                 continue
             elif len(node_coords) == 1:
                 node_coord = node_coords[0]
@@ -87,9 +87,14 @@ class DrawGraph:
             else:
                 node_coords = sorted(node_coords, key=lambda e: e[1][0], reverse=True)
                 node_coord = node_coords[0]
-                x = node_coord[1][0]
-                y = node_coord[2][-1] if len(center) > 0 else 0
                 center = node_coord[2]
+                x = node_coord[1][0]
+                parent = node_coord[3]
+                parent_nb_children = len(self.graph.outgoing(self.graph[parent]))
+                if parent_nb_children == 1:
+                    y = center[-1] if len(center) > 0 else 0
+                else:
+                    y = node_coord[1][1]
                 center = node_coord[2][:-1]
 
             # remove the branches that are already drawn

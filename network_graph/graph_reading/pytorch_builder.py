@@ -57,13 +57,12 @@ def get_shape(torch_node):
 
 
 def import_graph(hl_graph, model, input, verbose=False):
-    # TODO: add input names to graph
 
     # Run the Pytorch graph to get a trace and generate a graph from it
     trace, out = torch.jit._get_trace_graph(model, input)
     # print(trace)
 
-    _set_opset_version(12)
+    _set_opset_version(13)
     torch_graph = torch.onnx._optimize_trace(trace, torch.onnx.OperatorExportTypes.ONNX)
 
     # Dump list of nodes (DEBUG only)
@@ -82,7 +81,7 @@ def import_graph(hl_graph, model, input, verbose=False):
         # Get output shape
         shape = get_shape(torch_node)
         # Add HL node
-        hl_node = Node(uid=pytorch_id(torch_node), name=None, op=op, shape=shape, params=params)
+        hl_node = Node(uid=pytorch_id(torch_node), op=op, shape=shape, params=params)
         hl_graph.add_node(hl_node)
         # Add edges
         for target_torch_node in torch_graph.nodes():

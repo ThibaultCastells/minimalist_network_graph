@@ -14,11 +14,10 @@ from . import ge
 ###########################################################################
 
 class Fold():
-    def __init__(self, pattern, op, name=None):
+    def __init__(self, pattern, op):
         # TODO: validate that op and name are valid
         self.pattern = ge.GEParser(pattern).parse()
         self.op = op
-        self.name = name
 
     def apply(self, graph):
         while True:
@@ -32,20 +31,18 @@ class Fold():
             elif self.op == "__last__":
                 combo = matches[-1]
             else:
-                name = '_'.join([matches[i].id for i in range(len(matches))])
-                combo = Node(uid=name,
-                             name=self.name or " &gt; ".join([l.title for l in matches]),
+                uid = '_'.join([matches[i].id for i in range(len(matches))])
+                combo = Node(uid=uid,
                              op=self.op or self.pattern,
                              shape=matches[-1].shape)
             graph.replace(matches, combo)
 
 
 class FoldId():
-    def __init__(self, id_regex, op, name=None):
+    def __init__(self, id_regex, op):
         # TODO: validate op and name are valid
         self.id_regex = re.compile(id_regex)
         self.op = op
-        self.name = name
 
     def apply(self, graph):
         # Group nodes by the first matching group of the regex
@@ -66,7 +63,6 @@ class FoldId():
             # Replace with a new node
             # TODO: Find last node in the sub-graph and get the output shape from it
             combo = Node(uid=key,
-                         name=self.name,
                          op=self.op)
             graph.replace(nodes, combo)
 
@@ -131,9 +127,8 @@ class FoldDuplicates():
                 pattern = ge.SerialPattern([ge.NodePattern(node.op), ge.NodePattern(node.op)])
                 matches, _ = pattern.match(graph, node)
                 if matches:
-                    # Use op and name from the first node, and shape from the last
+                    # Use op from the first node, and shape from the last
                     combo = Node(uid=graph.sequence_id(matches),
-                                 name=node.name,
                                  op=node.op,
                                  shape=matches[-1].shape)
                     combo.repeat = sum([n.repeat for n in matches])
@@ -142,21 +137,16 @@ class FoldDuplicates():
 
 
 class Rename():
-    def __init__(self, op=None, name=None, to=None):
-        assert op or name, "Either op or name must be provided"
-        assert not (op and name), "Either op or name should be provided, but not both"
+    def __init__(self, op=None, to=None):
+        assert op, "op must be provided"
         assert bool(to), "The to parameter is required"
         self.to = to
         self.op = re.compile(op) if op else None
-        self.name = re.compile(name) if name else None
 
     def apply(self, graph):
         for node in graph.nodes.values():
             if self.op:
                 node.op = self.op.sub(self.to, node.op)
-            # TODO: name is not tested yet
-            if self.name:
-                node.name = self.name.sub(self.to, node.name)
 
 
 # Transforms to simplify graphs by folding layers that tend to be 

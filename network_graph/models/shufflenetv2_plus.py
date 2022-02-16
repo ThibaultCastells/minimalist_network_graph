@@ -10,8 +10,6 @@ class ShuffleNetV2_Plus(nn.Module):
     def __init__(self, input_size=224, n_class=1000, architecture=None, model_size='Large'):
         super(ShuffleNetV2_Plus, self).__init__()
 
-        print('model size is ', model_size)
-
         assert input_size % 32 == 0
         assert architecture is not None
 
@@ -51,19 +49,19 @@ class ShuffleNetV2_Plus(nn.Module):
                 blockIndex = architecture[archIndex]
                 archIndex += 1
                 if blockIndex == 0:
-                    print('Shuffle3x3')
+                    # Shuffle3x3
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=3, stride=stride,
                                                     activation=activation, useSE=useSE))
                 elif blockIndex == 1:
-                    print('Shuffle5x5')
+                    # Shuffle5x5
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=5, stride=stride,
                                                     activation=activation, useSE=useSE))
                 elif blockIndex == 2:
-                    print('Shuffle7x7')
+                    # Shuffle7x7
                     self.features.append(Shufflenet(inp, outp, base_mid_channels=outp // 2, ksize=7, stride=stride,
                                                     activation=activation, useSE=useSE))
                 elif blockIndex == 3:
-                    print('Xception')
+                    # Xception
                     self.features.append(Shuffle_Xception(inp, outp, base_mid_channels=outp // 2, stride=stride,
                                                           activation=activation, useSE=useSE))
                 else:
