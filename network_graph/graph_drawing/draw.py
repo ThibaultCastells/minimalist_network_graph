@@ -7,9 +7,26 @@ import math
 class DrawGraph:
 
     def __init__(self, graph, debug=False, pytorch_names=None):
+        t.tracer(0)
         self.debug = debug
         self.graph = graph
         self.drawn = [[None, None] for i in range(len(self.graph.nodes))]  # x,y position, index = id
+
+        t.mode("standard")
+        t.speed('fastest')
+        t.hideturtle()
+
+        self.highlighted = [False for i in range(len(self.graph.nodes))] # highlight active or not of each node
+        self.highlight_turtle = []
+        for _ in range(len(self.graph.nodes)):
+            # each highlight has it's own turtle (allows to clear one specific highlight)
+            t_highlight = t.Turtle()
+            t_highlight.speed('fastest')
+            t_highlight.hideturtle()
+            self.highlight_turtle.append(t_highlight)
+        self.highlight_status = [0 for i in range(len(self.graph.nodes))] # highlight status of each node
+        self.highlight_status_choices = [('#2164a0', 4), ('#cc0000', 4), ('#388c14', 4), ('#725db0', 4)] # blue red green purple
+
         self.drawn_op = set()  # not used currently, but may be used to draw the legend
         self.pytorch_names = pytorch_names
 
@@ -20,11 +37,6 @@ class DrawGraph:
         self.create_canvas()
 
         print(f"h:{t.window_width()}, w:{t.window_height()}, op_size:{self.op_size}")
-
-        t.mode("standard")
-        t.speed('fastest')
-        t.hideturtle()
-        t.tracer(0)
 
         t.title("Minimalist Network Graph")
 
@@ -222,7 +234,9 @@ class DrawGraph:
 
                 for i, e in enumerate(self.drawn):
                     if e[0] + self.op_size / 2 >= min_x and e[0] <= max_x and e[1] >= min_y and e[1] <= max_y:
-                        curr_id = f"{i:03d}"
+                        self.curr_id = f"{i:03d}"
+                        curr_id = self.curr_id # just for readability
+                        self.on_node = True
                         if curr_id != self.last_seen:
                             # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
                             t_info.clear()
@@ -276,6 +290,7 @@ class DrawGraph:
 
                             self.last_seen = curr_id
                         return
+            self.on_node = False
 
         self.canvas.bind('<Motion>', motion)
 
@@ -287,17 +302,64 @@ class DrawGraph:
         self.current_color = 0
         t_draw.color(self.colors[self.current_color])
 
+        def draw_highlight(x, y, turtle):
+            turtle.clear()
+            self.goto(x, y - round(self.op_size / 2), turtle=turtle)
+            for _ in range(4):
+                turtle.forward(round(self.op_size))  # Forward turtle by op_size units
+                turtle.left(90)  # Turn turtle by 90 degree
+            self.goto(x, y, turtle=turtle)
+
+        def update_highlight_turtle(node_idx):
+            turtle = self.highlight_turtle[node_idx]
+            highlight_status = self.highlight_status[node_idx]
+            color, thickness = self.highlight_status_choices[highlight_status]
+            turtle.color(color)
+            turtle.width(thickness)
+            return turtle
+
+        def update_highlight_activation_status(node_idx):
+            # update highlight activation status
+            self.highlighted[node_idx] = not self.highlighted[node_idx]
+            if not self.highlighted[node_idx]:
+                # if not highlighted anymore, remove the highlight
+                self.highlight_turtle[node_idx].clear()
+            else:
+                # else, add the highlight
+                turtle = update_highlight_turtle(node_idx)
+                x,y = self.drawn[node_idx]
+                draw_highlight(x, y, turtle)
+           
         def left_click(event):
-            x_canvas = (self.canvas.xview()[0] - 0.5) * self.w
-            y_canvas = (0.5 - self.canvas.yview()[0]) * self.h
-            x, y = event.x, event.y
-            self.goto(x_canvas + x, y_canvas - y, turtle=t_draw)
-            t_draw.dot(self.op_size)
+            if self.on_node:
+                # if a node is left clicked
+                node_idx = int(self.curr_id)
+                if self.highlighted[node_idx]:
+                    # if it was highlighted, change the highlight color
+                    prev_status = self.highlight_status[node_idx]
+                    self.highlight_status[int(self.curr_id)] = (prev_status + 1) % len(self.highlight_status_choices)
+                    turtle = update_highlight_turtle(node_idx)
+                    x,y = self.drawn[node_idx]
+                    draw_highlight(x, y, turtle)
+                else:
+                    # if it wasn't highlighted, highlight it
+                   update_highlight_activation_status(node_idx)
+            else:
+                x_canvas = (self.canvas.xview()[0] - 0.5) * self.w
+                y_canvas = (0.5 - self.canvas.yview()[0]) * self.h
+                x, y = event.x, event.y
+                self.goto(x_canvas + x, y_canvas - y, turtle=t_draw)
+                t_draw.dot(self.op_size)
 
         self.canvas.bind("<Button-1>", left_click)
 
         def right_click(event):
-            t_draw.clear()
+            if self.on_node:
+                # if a node is right clicked, un-highlight it
+                node_idx = int(self.curr_id)
+                update_highlight_activation_status(node_idx)
+            else:
+                t_draw.clear()
 
         self.canvas.bind("<Button-2>", right_click)
         self.canvas.bind("<Button-3>", right_click)
