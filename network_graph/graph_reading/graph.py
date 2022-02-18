@@ -81,34 +81,34 @@ class Node():
 class Graph():
     """Tracks nodes and edges of a directed graph and supports basic operations on them."""
 
-    def __init__(self, model=None, input=None, transforms="default", framework_transforms="default"):
+    def __init__(self, model, input=None, transforms="default", framework_transforms="default"):
         from collections import OrderedDict
         self.nodes = OrderedDict({})
         self.edges = []
 
-        if model:
-            # Detect framwork
-            framework = detect_framework(model)
-            if framework == "torch":
-                from .pytorch_builder import import_graph, FRAMEWORK_TRANSFORMS
-                assert input is not None, "Argument input must be provided for Pytorch models."
-                import_graph(self, model, input)
-            elif framework == "tensorflow":
-                from .tf_builder import import_graph, FRAMEWORK_TRANSFORMS
-                import_graph(self, model)
+        # Detect framwork
+        framework = detect_framework(model)
+        if framework == "torch":
+            from .pytorch_builder import import_graph, FRAMEWORK_TRANSFORMS
+            assert input is not None, "Argument input must be provided for Pytorch models."
+            import_graph(self, model, input)
+        elif framework == "tensorflow":
+            from .tf_builder import import_graph, FRAMEWORK_TRANSFORMS
+            import_graph(self, model)
 
-            # Apply Transforms
-            if framework_transforms:
-                if framework_transforms == "default":
-                    framework_transforms = FRAMEWORK_TRANSFORMS
-                for t in framework_transforms:
-                    t.apply(self)
-            if transforms:
-                if transforms == "default":
-                    from .transforms import SIMPLICITY_TRANSFORMS
-                    transforms = SIMPLICITY_TRANSFORMS
-                for t in transforms:
-                    t.apply(self)
+        # Apply Transforms
+        if framework_transforms:
+            if framework_transforms == "default":
+                framework_transforms = FRAMEWORK_TRANSFORMS
+            for t in framework_transforms:
+                t.apply(self)
+
+        if transforms:
+            if transforms == "default":
+                from .transforms import SIMPLICITY_TRANSFORMS
+                transforms = SIMPLICITY_TRANSFORMS
+            for t in transforms:
+                t.apply(self)
 
         # remove nodes we don't want:
         first = True

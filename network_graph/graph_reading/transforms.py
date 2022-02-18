@@ -156,5 +156,5 @@ class Rename():
 SIMPLICITY_TRANSFORMS = [
     # Fold("((Sigmoid > Mul) | ())", "Swish"),
     # Fold(" > Sigmoid > Mul | ", "Swish"),
-    FoldDuplicates()
+    # FoldDuplicates()
 ]
