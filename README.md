@@ -77,6 +77,14 @@ If there is a specific operation that you don't want to see, you can add it in t
 
 Also, if you have improvement ideas or if you want to contribute, you are welcome to open an issue or a pull request!
 
+## Testing
+
+To run the tests, execute the following in the project root
+
+```
+make test
+```
+
 ## Known issues
 
 - For complex connections (such as in atomnas model), some connections are drawn on top of each other, so it may be hard to understand. In this situation, you can use the text info (top left) to know the children and parents of each nodes.

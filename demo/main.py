@@ -19,7 +19,7 @@ def get_args(args=sys.argv[1:]):
     parser.add_argument(
         '--input',
         type=str,
-        default=224,
+        default='224',
         help='Input data size.\n\
             if int: the input will be a square image of dim [1,3,input,input]\n\
             if list: the input will use the list as dimensions\n\
