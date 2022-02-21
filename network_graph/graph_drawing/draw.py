@@ -224,72 +224,74 @@ class DrawGraph:
         self.last_seen = None
 
         def motion(event):
-            # print(f"x:{event.x}, y:{event.y}")
-            obj_coords = self.canvas.coords(event.widget.find_withtag("current"))
-            if len(obj_coords) > 0:
+            mouse_x, mouse_y = self.canvas.canvasx(event.x), -self.canvas.canvasy(event.y)
+            for item in self.canvas.find_all():
+                # compare mouse pos to all widgets in the canvas, to find the ones that are under the mouse
+                obj_coords = self.canvas.coords(item)
                 x = [obj_coords[i] for i in range(0, len(obj_coords), 2)]
                 y = [-obj_coords[i] for i in range(1, len(obj_coords), 2)]
                 min_x, max_x = min(x), max(x)
                 min_y, max_y = min(y), max(y)
+                if mouse_x >= min_x and mouse_x <= max_x and mouse_y >= min_y and mouse_y <= max_y:
+                    # if the mouse is over a widget, check if this widget is a node
+                    for i, e in enumerate(self.drawn):
+                        if e[0] + self.op_size / 2 >= min_x and e[0] <= max_x and e[1] >= min_y and e[1] <= max_y:
+                            self.curr_id = f"{i:03d}"
+                            curr_id = self.curr_id # just for readability
+                            self.on_node = True
+                            if curr_id != self.last_seen:
+                                # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
+                                t_info.clear()
 
-                for i, e in enumerate(self.drawn):
-                    if e[0] + self.op_size / 2 >= min_x and e[0] <= max_x and e[1] >= min_y and e[1] <= max_y:
-                        self.curr_id = f"{i:03d}"
-                        curr_id = self.curr_id # just for readability
-                        self.on_node = True
-                        if curr_id != self.last_seen:
-                            # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
-                            t_info.clear()
+                                x_txt = (self.canvas.xview()[0] - 0.5) * self.w
+                                y_txt = (0.5 - self.canvas.yview()[0]) * self.h
+                                delta_y = 23
+                                font = ("Arial", 13, "normal")
+                                curr_y = y_txt - 30
 
-                            x_txt = (self.canvas.xview()[0] - 0.5) * self.w
-                            y_txt = (0.5 - self.canvas.yview()[0]) * self.h
-                            delta_y = 23
-                            font = ("Arial", 13, "normal")
-                            curr_y = y_txt - 30
-
-                            self.goto(x_txt + 5, curr_y, turtle=t_info)
-                            
-                            info_conv = "  "
-                            if self.graph[curr_id].op == 'Conv':
-                                if 'kernel_shape' in self.graph[curr_id].params:
-                                    info_conv += f"  |  k: {self.graph[curr_id].params['kernel_shape']}"
-                                if 'group' in self.graph[curr_id].params:
-                                    info_conv += f"  |  group: {self.graph[curr_id].params['group']}"
-                            t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_conv, font=font)
-
-                            shape = self.graph[curr_id].shape
-                            if shape is not None:
-                                curr_y -= delta_y
                                 self.goto(x_txt + 5, curr_y, turtle=t_info)
-                                info_in = f"input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
-                                info_out = f"output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
-                                separator = " | " if info_in != "" and info_out != "" else ""
-                                t_info.write(f"{info_in}{separator}{info_out}", font=font)
+                                
+                                info_conv = "  "
+                                if self.graph[curr_id].op == 'Conv':
+                                    if 'kernel_shape' in self.graph[curr_id].params:
+                                        info_conv += f"  |  k: {self.graph[curr_id].params['kernel_shape']}"
+                                    if 'group' in self.graph[curr_id].params:
+                                        info_conv += f"  |  group: {self.graph[curr_id].params['group']}"
+                                t_info.write(f"{curr_id}: {self.graph[curr_id].op}" + info_conv, font=font)
 
-                            curr_y -= delta_y
-                            self.goto(x_txt + 5, curr_y, turtle=t_info)
-                            t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}",
-                                         font=font)
-                            curr_y -= delta_y
-                            self.goto(x_txt + 5, curr_y, turtle=t_info)
-                            t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}",
-                                         font=font)
-
-                            if self.pytorch_names is not None:
-                                id_matches = [i for i in self.pytorch_names if i[0] <= int(curr_id) and i[1] >= int(curr_id)]
-                                if len(id_matches) > 0:
+                                shape = self.graph[curr_id].shape
+                                if shape is not None:
                                     curr_y -= delta_y
                                     self.goto(x_txt + 5, curr_y, turtle=t_info)
-                                    t_info.write(f"PyTorch name: {id_matches[-1][2]}", font=font)
+                                    info_in = f"input shape: {shape[0]}" if shape[0] is not None and len(shape[0])>0 else ""
+                                    info_out = f"output shape: {shape[1]}" if shape[1] is not None and len(shape[1])>0 else ""
+                                    separator = " | " if info_in != "" and info_out != "" else ""
+                                    t_info.write(f"{info_in}{separator}{info_out}", font=font)
 
-
-                            if self.debug:
                                 curr_y -= delta_y
                                 self.goto(x_txt + 5, curr_y, turtle=t_info)
-                                t_info.write(f"pos: {self.drawn[i]}", font=font)
+                                t_info.write(f"parents: {[e.id for e in self.graph.incoming(self.graph[curr_id])]}",
+                                            font=font)
+                                curr_y -= delta_y
+                                self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                t_info.write(f"children: {[e.id for e in self.graph.outgoing(self.graph[curr_id])]}",
+                                            font=font)
 
-                            self.last_seen = curr_id
-                        return
+                                if self.pytorch_names is not None:
+                                    id_matches = [i for i in self.pytorch_names if i[0] <= int(curr_id) and i[1] >= int(curr_id)]
+                                    if len(id_matches) > 0:
+                                        curr_y -= delta_y
+                                        self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                        t_info.write(f"PyTorch name: {id_matches[-1][2]}", font=font)
+
+
+                                if self.debug:
+                                    curr_y -= delta_y
+                                    self.goto(x_txt + 5, curr_y, turtle=t_info)
+                                    t_info.write(f"pos: {self.drawn[i]}", font=font)
+
+                                self.last_seen = curr_id
+                            return
             self.on_node = False
 
         self.canvas.bind('<Motion>', motion)
@@ -318,8 +320,15 @@ class DrawGraph:
             turtle.width(thickness)
             return turtle
 
+        def update_highlight_status(node_idx, status=None):
+            # update the highlight status of a node
+            if status is None:
+                prev_status = self.highlight_status[node_idx]
+                status = (prev_status + 1) % len(self.highlight_status_choices)
+            self.highlight_status[node_idx] = status
+
         def update_highlight_activation_status(node_idx):
-            # update highlight activation status
+            # update highlight activation status of a node
             self.highlighted[node_idx] = not self.highlighted[node_idx]
             if not self.highlighted[node_idx]:
                 # if not highlighted anymore, remove the highlight
@@ -336,8 +345,7 @@ class DrawGraph:
                 node_idx = int(self.curr_id)
                 if self.highlighted[node_idx]:
                     # if it was highlighted, change the highlight color
-                    prev_status = self.highlight_status[node_idx]
-                    self.highlight_status[int(self.curr_id)] = (prev_status + 1) % len(self.highlight_status_choices)
+                    update_highlight_status(node_idx)
                     turtle = update_highlight_turtle(node_idx)
                     x,y = self.drawn[node_idx]
                     draw_highlight(x, y, turtle)
