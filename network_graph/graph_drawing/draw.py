@@ -12,6 +12,8 @@ class DrawGraph:
         self.graph = graph
         self.drawn = [[None, None] for i in range(len(self.graph.nodes))]  # x,y position, index = id
 
+        self.writting = False
+
         t.mode("standard")
         t.speed('fastest')
         t.hideturtle()
@@ -224,6 +226,8 @@ class DrawGraph:
         self.last_seen = None
 
         def motion(event):
+            if self.writting:
+                return
             mouse_x, mouse_y = self.canvas.canvasx(event.x), -self.canvas.canvasy(event.y)
             for item in self.canvas.find_all():
                 # compare mouse pos to all widgets in the canvas, to find the ones that are under the mouse
@@ -241,6 +245,7 @@ class DrawGraph:
                             self.on_node = True
                             if curr_id != self.last_seen:
                                 # print(f"{curr_id}: {e[0]}, {e[1]} ({self.graph[curr_id].op})")
+                                self.writting = True
                                 t_info.clear()
 
                                 x_txt = (self.canvas.xview()[0] - 0.5) * self.w
@@ -291,6 +296,7 @@ class DrawGraph:
                                     t_info.write(f"pos: {self.drawn[i]}", font=font)
 
                                 self.last_seen = curr_id
+                                self.writting = False
                             return
             self.on_node = False
 
